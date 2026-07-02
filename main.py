@@ -134,6 +134,7 @@ def edit_task(task_id):
             flash("Task updated successfully!", "success")
         except Exception:
             flash("Something went wrong", "error")
+        print(f"------------------------------------------------------{task_id}------------------------------------------------------") ##!#!#!#!#!
         return redirect(url_for("dashboard"))
     return render_template("edit_task.html", task=task)
 
@@ -147,7 +148,7 @@ def delete_task(task_id, source,status):
             db.session.delete(task)
             db.session.commit()
             if status=="complete":
-                flash("Task completed successfully!", "success")
+                flash("Task completed!", "success")
             elif status=="None":
                 flash("Task deleted successfully!", "success")
         except Exception:
@@ -159,6 +160,27 @@ def delete_task(task_id, source,status):
             db.session.delete(task)
             db.session.commit()
             flash("Task deleted successfully!", "success")
+        except Exception:
+            flash("Something went wrong", "error")
+        return redirect(url_for("completed_tasks"))
+    
+
+@app.route('/delete_all/<source>')
+@login_required
+def delete_all_tasks(source):
+    if source=='None':
+        try:
+            Task.query.filter_by(user_id=session["user_id"]).delete()
+            db.session.commit()
+            flash("All tasks deleted successfully!", "success")
+        except Exception:
+            flash(f"Something went wrong", "error")
+        return redirect(url_for("dashboard"))
+    elif source=='completed_source':
+        try:
+            CompletedTask.query.filter_by(user_id=session["user_id"]).delete()
+            db.session.commit()
+            flash("All tasks deleted successfully!", "success")
         except Exception:
             flash("Something went wrong", "error")
         return redirect(url_for("completed_tasks"))

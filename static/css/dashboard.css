@@ -11,13 +11,6 @@
     align-items:center;
 }
 
-.dropdown-content svg{
-    width:24px;
-    height:24px;
-    flex-shrink: 0;
-    fill:currentColor;
-}
-
 .task-card{
     width:90%;
     max-width:900px;
@@ -28,35 +21,20 @@
     box-shadow:0px 8px 20px rgba(0, 0, 0, 0.308);
     transition:0.1s;
 }
-.toolbar .dropdown-content{
-    background:rgba(201, 200, 200, 0.404);
-}
-.toolbar svg{
-    width:24px;
-    height:24px;
-    flex-shrink: 0;
-    fill:currentColor;
-}
 
 #high{
-    background:#ff7777;
-}
-#high .dropdown-content{
-    background: #ff6b6b63;
+    border: 2px solid #ff0000;
+
 }
 #medium{
-    background:#ffbf48;
-    color:black;
- }
-#medium .dropdown-content{
-    background:#fdc55d73;
-    color:black;
+    border: 2px solid #ffa600;
 }
-#low, #low .dropdown-content{
-    background:#4af591;
+#low{
+    border: 2px solid #00bd4f;
 }
-#low .dropdown-content{
-    background:#4cff9765;
+#high .dropdown-content,#medium .dropdown-content,#low .dropdown-content{
+    background:rgba(201, 200, 200, 0.945);
+    box-shadow:0px 8px 20px rgba(0, 0, 0, 0.418);
 }
 
 .task-card:hover{
@@ -119,10 +97,10 @@
     overflow:hidden;
 }
 
-.dropdown-content a{
+.dropdown-content a,.delete-all-tasks a{
     display:flex;
     align-items: center;
-    gap: 15px;
+    gap: 8px;
     padding:14px 18px;
     text-decoration:none;
     color:black;
@@ -149,15 +127,23 @@
     align-items: center;
     gap: 7px;
     font-size:25px;
-    font-weight:bold;
-    background:#e3e3e3;
+    font-weight:normal;
+    background:#d4d4d4;
     padding: 10px 10px;
     border-radius:18px;
-    box-shadow:0px 8px 20px rgba(0,0,0,0.15);
 }
 .toolbar h3{
     font-size:30px;
     margin-bottom:10px
+}
+.toolbar .dropdown-content{
+    background:rgba(201, 200, 200, 0.945);
+}
+.toolbar svg,.delete-all-tasks svg, .dropdown-content svg{
+    width:24px;
+    height:24px;
+    flex-shrink: 0;
+    fill:currentColor;
 }
 .flash-container{
     position:fixed;
@@ -168,15 +154,15 @@
 .flash{
     position:fixed;
     color:black;
-    top:20px;
+    bottom:20px;
     right:20px;
     padding:15px 20px;
     border-radius:10px;
     color:white;
     animation:fadeOut 5s forwards;
-    box-shadow:0px 8px 20px rgba(0, 0, 0, 0.308);
+    box-shadow:0px 8px 20px rgba(0, 0, 0, 0.349);
     animation: slideInOut 5s ease forwards;
-    /* the color of the text is defined in th main code in dashbord.html*/
+    /* the backgroud-color is defined in th main code in dashbord.html*/
 }
 @keyframes slideInOut{
     0%{
@@ -194,4 +180,9 @@
     100%{
         transform:translateX(120%);
         opacity:0;}
+}
+.delete-all-tasks{
+    position:absolute;
+    top:10px;
+    right:70px;
 }
