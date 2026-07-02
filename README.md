@@ -17,6 +17,8 @@ For the second version, I redesigned the interface so users interacted with the 
 Later, while scrolling through social media, I discovered Hack Club and learned about Horizons. It gave me the motivation to finally build the web version of my project.
 During development, I migrated the application from CSV file storage to a SQLite database using SQLAlchemy to improve scalability and data management.
 
+[You can see the project versions in the project tags](https://github.com/82936473/Horizons-AI/tags)
+
 --------------
 
 ## Features
@@ -75,7 +77,7 @@ python main.py
 
 --------------
 ## Live Demo
-[text](https://horizons-ai-production.up.railway.app/)
+[Here's the live website, you can check it from here.](https://horizons-ai-production.up.railway.app/)
 
 --------------
 

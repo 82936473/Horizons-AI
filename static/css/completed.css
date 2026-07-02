@@ -86,11 +86,9 @@
     overflow:hidden;
 }
 
-.dropdown-content a{
-    color:white;
+.dropdown-content a,.delete-all-tasks a{
     display:flex;
     align-items: center;
-
     padding:14px 18px;
     text-decoration:none;
     color:black;
@@ -166,12 +164,8 @@
     position:absolute;
     top:10px;
     right:70px;
+    border-radius: 12px;
 }
-.delete-all-tasks a{
-    display:flex;
-    align-items: center;
-    gap: 8px;
-    padding:14px 18px;
-    text-decoration:none;
-    color:black;
+.delete-all-tasks a:hover{
+    background:#f3f3f3;
 }
