@@ -12,7 +12,7 @@
 }
 
 .task-card{
-    width:90%;
+    width:100%;
     max-width:900px;
     border-radius:18px;
     padding:25px 35px;
@@ -23,13 +23,16 @@
 }
 
 #high{
+    background-color:#ff000033;
     border: 2px solid #ff0000;
 
 }
 #medium{
+    background-color:#ffa60033;
     border: 2px solid #ffa600;
 }
 #low{
+    background-color:#00bd4f33;
     border: 2px solid #00bd4f;
 }
 #high .dropdown-content,#medium .dropdown-content,#low .dropdown-content{
@@ -86,7 +89,9 @@
     font-size:30px;
     cursor:pointer;
 }
-
+.menuu.sortby:hover{
+    background:#f3f3f3;
+}
 .dropdown-content{
     display:none;
     position:absolute;
@@ -128,7 +133,7 @@
     gap: 7px;
     font-size:25px;
     font-weight:normal;
-    background:#d4d4d4;
+    background:#ffffff;
     padding: 10px 10px;
     border-radius:18px;
 }
@@ -156,7 +161,6 @@
     color:black;
     bottom:20px;
     right:20px;
-    padding:15px 20px;
     border-radius:10px;
     color:white;
     animation:fadeOut 5s forwards;
@@ -185,4 +189,8 @@
     position:absolute;
     top:10px;
     right:70px;
+    border-radius:12px;
+}
+.delete-all-tasks:hover{
+    background:#f3f3f3;
 }

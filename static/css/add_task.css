@@ -90,15 +90,18 @@
     background: #5a38db;
 }
 .add-card.high{
-    background:#ff6969;
+    background-color:#ff000033;
+    border: 2px solid #ff0000;
 }
 
 .add-card.medium{
-    background:#ffba3b;
+    background-color:#ffa60033;
+    border: 2px solid #ffa600;
 }
 
 .add-card.low{
-    background:#2ecc71;
+    background-color:#00bd4f33;
+    border: 2px solid #00bd4f;
 }
 @media (max-width:700px){
 

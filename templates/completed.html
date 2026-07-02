@@ -10,7 +10,7 @@
              <div class="flash-container">
                 {% for category, message in messages %}
                     <div style="color:black;" class="flash {{ category }}">
-                        {{ message }}
+                        <button type="button" class="btn btn-primary">{{message}}</button>
                     </div>
                 {% endfor %}
              </div>
