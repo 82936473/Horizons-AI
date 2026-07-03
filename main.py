@@ -4,6 +4,8 @@ from functools import wraps
 from database import db
 from sqlalchemy import case 
 from werkzeug.security import generate_password_hash, check_password_hash
+from ai_models import TaskBreakdown, TaskDecision
+import ast
 import os
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev_secret")
@@ -11,12 +13,13 @@ app.secret_key="Long_random_secret_key"
 tasks=None
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///horizons.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-# db = SQLAlchemy()
 db.init_app(app)
-from models import CompletedTask, User,Task
+from models import CompletedTask, User, Task, AISuggestions 
 with app.app_context():
     db.create_all()
 
+decision_maker=TaskDecision()
+breaker=TaskBreakdown()
 def login_required(f):
 
     @wraps(f)
@@ -102,23 +105,28 @@ def add_task():
             priority = request.form["priority"]
             due_date = request.form["due_date"]
             user_id=session["user_id"]
+            evaluate=decision_maker.evaluate_task(task)
+            if evaluate=="yes":
+                evaluate=True
+            else :
+                evaluate=None
             if due_date:
                 due_date=date.fromisoformat(due_date)
             else:
                 due_date=None
-            new_task = Task(title=task,priority=priority,due_date=due_date if due_date else None,user_id=user_id)
+            new_task = Task(title=task,priority=priority,due_date=due_date,user_id=user_id,evaluate=evaluate)
             db.session.add(new_task)
             db.session.commit()
             flash("Task added successfully!", "success")
         except Exception:
-            flash("Something went wrong", "error")
+            flash(f"Something went wrong", "error")
         return redirect(url_for("dashboard"))
 
     return render_template("add_task.html",status="add_task",title="Add Task")
 
-@app.route('/edit/<int:task_id>', methods=['GET','POST'])
+@app.route('/edit/<int:task_id>/<source>', methods=['GET','POST'])
 @login_required
-def edit_task(task_id):
+def edit_task(task_id,source):
     task=Task.query.filter_by(id=task_id,user_id=session["user_id"]).first_or_404()
     if request.method=="POST":
         try:
@@ -134,7 +142,6 @@ def edit_task(task_id):
             flash("Task updated successfully!", "success")
         except Exception:
             flash("Something went wrong", "error")
-        print(f"------------------------------------------------------{task_id}------------------------------------------------------") ##!#!#!#!#!
         return redirect(url_for("dashboard"))
     return render_template("edit_task.html", task=task)
 
@@ -206,6 +213,17 @@ def completed_tasks():
     tasks = CompletedTask.query.filter_by(user_id=session["user_id"]).all()
     return render_template("completed.html", title="Completed Tasks", tasks=tasks, status="completed_tasks")
 
+@app.route('/break-down/<task>',methods=['GET','POST'])
+@login_required
+def break_down(task):
+    if request.method=='GET':
+        new_tasks=ast.literal_eval(breaker.break_down_task(task))
+        for i in new_tasks:
+            new_task = AISuggestions(title=i[0],priority=i[1],due_date=None,user_id=session["user_id"])
+            db.session.add(new_task)
+            db.session.commit()
+        breaked_tasks =AISuggestions.query.filter_by(user_id=session["user_id"]).all()
+    return render_template("ai_suggestions.html",title="suggestions",tasks=breaked_tasks)
 
 @app.route("/logout")
 def logout():

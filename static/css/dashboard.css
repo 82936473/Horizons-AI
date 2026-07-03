@@ -60,7 +60,7 @@
 .task-card hr{
     margin:8px 0;
     border:none;
-    border-top:1px solid rgba(0,0,0,0.2);
+    border-top:2px solid rgb(0, 0, 0);
 }
 
 
@@ -82,12 +82,22 @@
     position:relative;
     display:inline-block;
 }
-
 .menuu{
     background:none;
     border:none;
     font-size:30px;
     cursor:pointer;
+}
+.break-down{
+    background-color:rgba(111, 111, 253, 0.521);
+    text-decoration: none;
+    color:black;
+    padding:5px;
+    border-radius: 12px;
+    border: 2px solid blue;
+    font-size:15px;
+    cursor:pointer;
+
 }
 .menuu.sortby:hover{
     background:#f3f3f3;
@@ -193,4 +203,31 @@
 }
 .delete-all-tasks:hover{
     background:#f3f3f3;
+}
+.suggestions_confirm a{
+    text-decoration:none;
+    font-size:18px;
+    font-weight:600;
+    padding:15px 40px;
+    border-radius:14px;
+    transition:.2s;
+}
+.cancel-btn{
+    margin:20px;
+    color:#6d4aff;
+    border:2px solid #6d4aff;
+}
+
+.cancel-btn:hover{
+    background:#ece8ff;
+}
+
+.confirm-btn{
+    margin:20px;
+    background:#6d4aff;
+    color:white;
+}
+
+.confirm-btn:hover{
+    background:#5a38db;
 }
