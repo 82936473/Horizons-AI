@@ -52,7 +52,7 @@
                     </div>
                     <div class="dropdown">
                         {% if task.evaluate %}
-                            <a href="{{url_for('break_down',task=task.title)}}" class="break-down">Break down this task</a>
+                            <a href="{{url_for('break_down',task=task.title,task_id=task.id)}}" class="break-down">Break down this task</a>
                         {% endif %}
                         <button class="menuu">⋮</button>
 

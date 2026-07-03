@@ -50,8 +50,8 @@
 
         {% endfor %} 
         <div class="suggestions_confirm">
-            <a class="confirm-btn" href="#";">Confirm</a>
-            <a class="cancel-btn" href="#">Cancel</a>
+            <a class="cancel-btn" href="{{ url_for('cancel_break_down') }}">Cancel</a>
+            <a class="confirm-btn" href="{{url_for('confirm_break_down',task_id=id)}}">Confirm</a>
         </div>
     </main>
 

@@ -121,7 +121,6 @@ def add_task():
         except Exception:
             flash(f"Something went wrong", "error")
         return redirect(url_for("dashboard"))
-
     return render_template("add_task.html",status="add_task",title="Add Task")
 
 @app.route('/edit/<int:task_id>/<source>', methods=['GET','POST'])
@@ -195,35 +194,72 @@ def delete_all_tasks(source):
 @app.route('/complete/<int:task_id>/<task_title>/<due_date>')
 @login_required
 def complete_task(task_id,task_title,due_date):
-    task = task_title
-    due_date = due_date
-    if due_date!='None':
-            due_date=date.fromisoformat(due_date)
-    else:
-            due_date=None
-    completed_task = CompletedTask(title=task,due_date=due_date,user_id=session["user_id"])
-    db.session.add(completed_task)
-    db.session.commit()
+    try:
+        task = task_title
+        due_date = due_date
+        if due_date!='None':
+                due_date=date.fromisoformat(due_date)
+        else:
+                due_date=None
+        completed_task = CompletedTask(title=task,due_date=due_date,user_id=session["user_id"])
+        db.session.add(completed_task)
+        db.session.commit()
+    except:
+            flash("Something went wrong", "error")
     return redirect(url_for("delete_task", task_id=task_id, source='None', status="complete"))
 
 
 @app.route('/completed')
 @login_required
 def completed_tasks():
-    tasks = CompletedTask.query.filter_by(user_id=session["user_id"]).all()
+    try:
+        tasks = CompletedTask.query.filter_by(user_id=session["user_id"]).all()
+    except:
+        flash("Something went wrong", "error")
     return render_template("completed.html", title="Completed Tasks", tasks=tasks, status="completed_tasks")
 
-@app.route('/break-down/<task>',methods=['GET','POST'])
+@app.route('/break-down/<task><task_id>',methods=['GET','POST'])
 @login_required
-def break_down(task):
-    if request.method=='GET':
+def break_down(task,task_id):
+    try:
         new_tasks=ast.literal_eval(breaker.break_down_task(task))
         for i in new_tasks:
             new_task = AISuggestions(title=i[0],priority=i[1],due_date=None,user_id=session["user_id"])
             db.session.add(new_task)
             db.session.commit()
         breaked_tasks =AISuggestions.query.filter_by(user_id=session["user_id"]).all()
-    return render_template("ai_suggestions.html",title="suggestions",tasks=breaked_tasks)
+    except:
+        flash('Something went wrong','error')
+    return render_template("ai_suggestions.html",title="suggestions",tasks=breaked_tasks,id=task_id)
+
+@app.route('/confirm-break-down/<task_id>')
+@login_required
+def confirm_break_down(task_id):
+    try:
+        tasks = AISuggestions.query.filter_by(user_id=session["user_id"])
+        for i in tasks:
+            new_task = Task(title=i.title,priority=i.priority,due_date=i.due_date,user_id=session["user_id"])
+            db.session.add(new_task)
+            db.session.commit()
+        task=Task.query.filter_by(id=task_id,user_id=session["user_id"]).first_or_404()
+        db.session.delete(task)
+        tasks.delete()
+        tasks=Task.query.filter_by(user_id=session["user_id"])
+        db.session.commit()
+        flash('Tasks added successfully!','success')
+    except:
+            flash("Something went wrong", "error")
+    return redirect(url_for('dashboard'))
+@app.route('/cancel-break-down')
+@login_required
+def cancel_break_down():
+    try:
+        tasks=AISuggestions.query.filter_by(user_id=session["user_id"])
+        tasks.delete()
+    except:
+        flash("Something went wrong", "error")
+    return redirect(url_for('dashboard'))
+
 
 @app.route("/logout")
 def logout():
