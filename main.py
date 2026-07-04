@@ -52,15 +52,25 @@ def sign_up():
             existing_user = User.query.filter_by(username=username).first()
             if existing_user:
                 raise ValueError("Username already exists")
-            new_user = User(username=username,password=generate_password_hash(password))  #!#!
+            new_user = User(username=username,name='',password=generate_password_hash(password))  #!#!
             db.session.add(new_user)
             db.session.commit()
             session["user_id"]=new_user.id
             session["username"]=new_user.username
-            return redirect(url_for('dashboard'))
+            return redirect(url_for('user_name'))
         except ValueError as e:
             error=str(e)
     return render_template('sign_up.html',title='Sign up',error=error)
+
+@app.route('/user_name',methods=['POST','GET'])
+def user_name():
+    if request.method=='POST':
+        name=request.form.get("name")
+        user = User.query.filter_by(id=session["user_id"]).first_or_404()
+        user.name=name
+        db.session.commit()
+        return redirect(url_for('dashboard'))
+    return render_template("user's_name.html")
 
 
 @app.route('/log_in',methods=['POST','GET'])
@@ -119,7 +129,8 @@ def add_task():
             db.session.add(new_task)
             db.session.commit()
             flash("Task added successfully!", "success")
-        except Exception:
+        except Exception as e:
+            print(e)
             flash(f"Something went wrong", "error")
         return redirect(url_for("dashboard"))
     return render_template("add_task.html",status="add_task",title="Add Task")
