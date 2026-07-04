@@ -10,6 +10,7 @@ class Task(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(300),nullable=False)
     priority = db.Column(db.String(10),nullable=False)
+    category = db.Column(db.String(50), default="General")
     due_date = db.Column(db.Date,nullable=True)
     @property
     def friendly_date(self):
@@ -27,6 +28,7 @@ class AISuggestions(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(300),nullable=False)
     priority = db.Column(db.String(10),nullable=False)
+    category = db.Column(db.String(50), default="General")
     due_date = db.Column(db.Date,nullable=True)
     user_id = db.Column(db.Integer,db.ForeignKey("user.id"),nullable=False)
 class CompletedTask(db.Model):

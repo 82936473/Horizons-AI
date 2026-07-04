@@ -119,6 +119,7 @@ def add_task():
             task = request.form["task"]
             priority = request.form["priority"]
             due_date = request.form["due_date"]
+            category= request.form["category"]
             user_id=session["user_id"]
             evaluate=decision_maker.evaluate_task(task)
             if evaluate=="yes":
@@ -129,7 +130,7 @@ def add_task():
                 due_date=date.fromisoformat(due_date)
             else:
                 due_date=None
-            new_task = Task(title=task,priority=priority,due_date=due_date,user_id=user_id,evaluate=evaluate)
+            new_task = Task(title=task,priority=priority,due_date=due_date,user_id=user_id,category=category,evaluate=evaluate)
             db.session.add(new_task)
             db.session.commit()
             flash("Task added successfully!", "success")
@@ -151,6 +152,7 @@ def edit_task(task_id,source):
                 updated_task=request.form["task"]
                 task.title=updated_task
                 task.priority=request.form['priority']
+                task.category=request.form['category']
                 due_date=request.form['due_date']
                 if due_date:
                     from datetime import date
@@ -165,8 +167,7 @@ def edit_task(task_id,source):
                 task.evaluate=evaluate
                 db.session.commit()
                 flash("Task updated successfully!", "success")
-            except Exception as e:
-                print(f"{e}--------------")
+            except Exception:
                 flash("Something went wrong", "error")
             return redirect(url_for("dashboard"))
     else:
@@ -175,6 +176,7 @@ def edit_task(task_id,source):
             try:
                 task.title=request.form["task"]
                 task.priority=request.form['priority']
+                task.category=request.form['category']
                 due_date=request.form['due_date']
                 if due_date:
                     from datetime import date
@@ -279,7 +281,7 @@ def break_down(task,task_id):
     try:
         new_tasks=ast.literal_eval(breaker.break_down_task(task))
         for i in new_tasks:
-            new_task = AISuggestions(title=i[0],priority=i[1],due_date=None,user_id=session["user_id"])
+            new_task = AISuggestions(title=i[0],priority=i[1],category=i[2],due_date=None,user_id=session["user_id"])
             db.session.add(new_task)
             db.session.commit()
         breaked_tasks =AISuggestions.query.filter_by(user_id=session["user_id"]).all()
@@ -293,7 +295,7 @@ def confirm_break_down(task_id):
     try:
         tasks = AISuggestions.query.filter_by(user_id=session["user_id"])
         for i in tasks:
-            new_task = Task(title=i.title,priority=i.priority,due_date=i.due_date,user_id=session["user_id"])
+            new_task = Task(title=i.title,priority=i.priority,category=i.category,due_date=i.due_date,user_id=session["user_id"])
             db.session.add(new_task)
             db.session.commit()
         task=Task.query.filter_by(id=task_id,user_id=session["user_id"]).first_or_404()

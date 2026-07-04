@@ -17,6 +17,13 @@
             <label>Task</label>
 
             <input type="text" name="task" value="{{ task.title }}" required>
+            
+            <label>Category</label>
+            {% if task.category %}
+            <input type="text" name="category" placeholder="Work, Travel, Health... (or nothing)" value="{{ task.category }}" >
+            {% else %}
+            <input type="text" name="category" placeholder="Work, Travel, Health... (or nothing)" >
+            {% endif %}
 
             <label>Priority</label>
 

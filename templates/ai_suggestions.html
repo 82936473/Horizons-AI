@@ -25,6 +25,9 @@
                     {% if task.due_date %}
                             <p><strong>Due date:</strong> {{ task.due_date }}</p>
                     {% endif %}
+                    {% if task.category %}
+                            <p><strong>Category:</strong> {{ task.category }}</p>
+                    {% endif %}
                     <p>
                         <strong>Priority:</strong>
                         <span>
