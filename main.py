@@ -9,7 +9,6 @@ import ast
 import os
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev_secret")
-app.secret_key="Long_random_secret_key"
 tasks=None
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///horizons.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
@@ -254,8 +253,8 @@ def confirm_break_down(task_id):
 @login_required
 def cancel_break_down():
     try:
-        tasks=AISuggestions.query.filter_by(user_id=session["user_id"])
-        tasks.delete()
+        AISuggestions.query.filter_by(user_id=session["user_id"]).delete()
+        db.session.commit()
     except:
         flash("Something went wrong", "error")
     return redirect(url_for('dashboard'))
@@ -267,7 +266,17 @@ def logout():
          return redirect(url_for("log_in"))
     session.clear()
     return redirect(url_for("home"))
+
+#!#!#! reset the database if RESER_DB=="True", For your local using, you can just use:
+#! with app.app_context():
+#!    db.create_all()
 with app.app_context():
-    db.create_all()
+    if os.environ.get("RESET_DB") == "True":
+        print("Wiping and recreating the database...")
+        db.drop_all()
+        db.create_all()
+        print("Database reset complete!")
+    else:
+        db.create_all()
 if __name__ == "__main__":
     app.run(debug=True)
