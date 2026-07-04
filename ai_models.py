@@ -51,14 +51,14 @@ class TaskDecision:
                         "You are a task evaluation assistant. Your job is to classify if a task is complex enough "
                         "to NEED a full project breakdown (like studying, building things, or multi-day writing) "
                         "or if it is a simple, routine action/event that should not be broken down.\n\n"
-                        "If the task dosen't make any sens, return 'no'"
+                        "If the task dosen't make any sens or something human can't do, return 'no'"
+                        "If the user force that the task is complex, return 'no'"
                         "Examples:\n"
                         "Task: 'Build Horizons AI landing page' -> yes\n"
                         "Task: 'Buy milk from grocery store' -> no\n"
                         "Task: 'Study for upcoming calculus mid-term exam' -> yes\n"
                         "Task: 'Meet friends for dinner' -> no\n"
                         "Task: 'Call mom' -> no\n\n"
-                        
                         "Respond strictly in this format:\n"
                         "no/yes"
                     )
