@@ -3,12 +3,15 @@ from datetime import date
 from functools import wraps
 from database import db
 from sqlalchemy import case 
+from dotenv import load_dotenv
 from werkzeug.security import generate_password_hash, check_password_hash
 from ai_models import TaskBreakdown, TaskDecision
 import ast
 import os
 app = Flask(__name__)
-app.secret_key = os.environ.get("SECRET_KEY", "dev_secret")
+load_dotenv()
+app.secret_key = os.environ.get("SECRET_KEY")
+print(f"------------------------{app.secret_key}")
 tasks=None
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///horizons.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
