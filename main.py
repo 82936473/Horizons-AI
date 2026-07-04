@@ -11,7 +11,6 @@ import os
 app = Flask(__name__)
 load_dotenv()
 app.secret_key = os.environ.get("SECRET_KEY")
-print(f"------------------------{app.secret_key}")
 tasks=None
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///horizons.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
@@ -125,9 +124,9 @@ def add_task():
         return redirect(url_for("dashboard"))
     return render_template("add_task.html",status="add_task",title="Add Task")
 
-@app.route('/edit/<int:task_id>/<source>', methods=['GET','POST'])
+@app.route('/edit/<int:task_id>', methods=['GET','POST'])
 @login_required
-def edit_task(task_id,source):
+def edit_task(task_id):
     task=Task.query.filter_by(id=task_id,user_id=session["user_id"]).first_or_404()
     if request.method=="POST":
         try:
