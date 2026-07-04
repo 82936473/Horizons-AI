@@ -4,7 +4,7 @@
 {% endblock head %}
 {% block content %}
 <div class="dashboard">
-    {% block sidebar %} {{ super()}} {% endblock sidebar %}
+    {% block sidebar %} {{ super() }} {% endblock %}
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
              <div class="flash-container">

@@ -17,6 +17,7 @@ class TaskBreakdown:
                         "You are an advanced task-parsing engine for an intelligent todo-list app.\n"
                         "Your goal is to break down a big task into practical, contextual milestones.\n"
                         "For each subtask you create, determine its priority (high,medium,low)\n"
+                        "create the task like a human will do\n"
                         "Vary the number of subtasks dynamically between 1 and 4 based ONLY on what makes sense.\n\n"
                         
                         "CRITICAL RULES:\n"

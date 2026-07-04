@@ -98,6 +98,8 @@ def log_in():
 def dashboard():
     sort = request.args.get("sort", "date")
     query = Task.query.filter_by(user_id=session["user_id"])
+    user = User.query.get(session["user_id"])
+    name=user.name
     if sort == "priority":
         query = query.order_by(case((Task.priority == "High", 1),(Task.priority == "Medium", 2),(Task.priority == "Low", 3),))
     elif sort == "name":
@@ -106,10 +108,12 @@ def dashboard():
         query = query.order_by(Task.due_date)
     tasks = query.all()
 
-    return render_template("dashboard.html",title="Dashboard",tasks=tasks,status="dashboard")
+    return render_template("dashboard.html",title="Dashboard",tasks=tasks,status="dashboard",name=name)
 @app.route("/add", methods=["GET", "POST"])
 @login_required
 def add_task():
+    user = User.query.get(session["user_id"])
+    name=user.name
     if request.method == "POST":
         try:
             task = request.form["task"]
@@ -133,11 +137,13 @@ def add_task():
             print(e)
             flash(f"Something went wrong", "error")
         return redirect(url_for("dashboard"))
-    return render_template("add_task.html",status="add_task",title="Add Task")
+    return render_template("add_task.html",status="add_task",title="Add Task",name=name)
 
 @app.route('/edit/<int:task_id>/<source>', methods=['GET','POST'])
 @login_required
 def edit_task(task_id,source):
+    user = User.query.get(session["user_id"])
+    name=user.name
     if source=='None':
         task=Task.query.filter_by(id=task_id,user_id=session["user_id"]).first_or_404()
         if request.method=="POST":
@@ -180,13 +186,15 @@ def edit_task(task_id,source):
                 tasks=AISuggestions.query.filter_by(user_id=session["user_id"])
             except Exception:
                 flash("Something went wrong", "error")
-            return render_template("ai_suggestions.html",title="suggestions",tasks=tasks,id=source)
-    return render_template("edit_task.html", task=task, source=source)
+            return render_template("ai_suggestions.html",title="suggestions",tasks=tasks,id=source,name=name)
+    return render_template("edit_task.html", task=task, source=source,name=name)
 
 
 @app.route('/delete/<int:task_id>/<source>/<status>')
 @login_required
 def delete_task(task_id, source, status):
+    user = User.query.get(session["user_id"])
+    name=user.name
     try:
         if source=='None':
                 task=Task.query.filter_by(id=task_id,user_id=session["user_id"]).first_or_404()
@@ -209,7 +217,7 @@ def delete_task(task_id, source, status):
             db.session.commit()
             flash("Task deleted successfully!", "success")
             tasks=AISuggestions.query.filter_by(user_id=session["user_id"])
-            return render_template("ai_suggestions.html",title="suggestions",tasks=tasks,id=source)
+            return render_template("ai_suggestions.html",title="suggestions",tasks=tasks,id=source,name=name)
     except:
         flash("Something went wrong", "error")
     
@@ -255,15 +263,19 @@ def complete_task(task_id,task_title,due_date):
 @app.route('/completed')
 @login_required
 def completed_tasks():
+    user = User.query.get(session["user_id"])
+    name=user.name
     try:
         tasks = CompletedTask.query.filter_by(user_id=session["user_id"]).all()
     except:
         flash("Something went wrong", "error")
-    return render_template("completed.html", title="Completed Tasks", tasks=tasks, status="completed_tasks")
+    return render_template("completed.html", title="Completed Tasks", tasks=tasks, status="completed_tasks",name=name)
 
 @app.route('/break-down/<task><task_id>',methods=['GET','POST'])
 @login_required
 def break_down(task,task_id):
+    user = User.query.get(session["user_id"])
+    name=user.name
     try:
         new_tasks=ast.literal_eval(breaker.break_down_task(task))
         for i in new_tasks:
@@ -273,7 +285,7 @@ def break_down(task,task_id):
         breaked_tasks =AISuggestions.query.filter_by(user_id=session["user_id"]).all()
     except:
         flash('Something went wrong','error')
-    return render_template("ai_suggestions.html",title="suggestions",tasks=breaked_tasks,id=task_id)
+    return render_template("ai_suggestions.html",title="suggestions",tasks=breaked_tasks,id=task_id,name=name)
 
 @app.route('/confirm-break-down/<task_id>')
 @login_required
