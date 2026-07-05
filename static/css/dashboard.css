@@ -12,14 +12,15 @@
 }
 
 .task-card{
-    width:100%;
+    width: 100%;
     max-width:900px;
     border-radius:18px;
     padding:15px 15px;
-    margin-bottom:15px;
-    box-sizing:border-box;
+    margin-bottom:22px;
     box-shadow:0px 8px 20px rgba(0, 0, 0, 0.308);
     transition:0.1s;
+    display:block;   
+    box-sizing:border-box;
 }
 
 #high{
@@ -35,13 +36,12 @@
     background-color:#00bd4f33;
     border: 4px solid #00bd4f;
 }
-#high .dropdown-content,#medium .dropdown-content,#low .dropdown-content{
-    background:rgba(201, 200, 200, 0.945);
-    box-shadow:0px 8px 20px rgba(0, 0, 0, 0.418);
-}
 
 .task-card:hover{
-    transform:translateY(-8px);
+    transform: translateY(-8px);
+}
+.task-card:hover,.subtask-tree li:hover{
+    z-index:100;
 }
 
 
@@ -77,11 +77,6 @@
 }
 
 
-.dropdown{
-    font-size: 20px;
-    position:relative;
-    display:inline-block;
-}
 .menuu{
     background:none;
     border:none;
@@ -106,25 +101,45 @@
 }
 .dropdown-content{
     display:none;
-    position:absolute;
-    right:0;
-    min-width:150px;
-    border-radius:10px;
-    box-shadow:0 5px 15px rgba(0,0,0,0.2);
-    overflow:hidden;
+    position: absolute;
+    right: 0;
+    top: 100%;
+    background-color: #2a2a2a !important;
+    min-width: 160px;
+    border-radius: 10px;
+    padding: 6px 0;
+    z-index: 999 !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    border: 1px solid #404040;
+}
+
+
+.dropdown{
+    font-size: 20px;
+    display:inline-block;
 }
 
 .dropdown-content a,.delete-all-tasks a{
-    display:flex;
     align-items: center;
     gap: 8px;
     padding:14px 18px;
     text-decoration:none;
     color:black;
+    color: #e3e3e3 ;
+    padding: 10px 16px;
+    text-decoration: none;
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background-color 0.2s ease, color 0.2s ease;
 }
-
-.dropdown-content a:hover{
-    background:#f3f3f3;
+/* .delete-all-tasks a{
+    color:black;
+    text-decoration: none;
+} */
+.dropdown-content a:hover {
+    background-color: #3d3d3d;
+    color: #ffffff !important;
 }
 .task-title{
     overflow-wrap: break-word;
@@ -153,10 +168,8 @@
     font-size:30px;
     margin-bottom:10px
 }
-.toolbar .dropdown-content{
-    background:rgba(201, 200, 200, 0.945);
-}
-.toolbar svg,.delete-all-tasks svg, .dropdown-content svg{
+
+svg{
     width:24px;
     height:24px;
     flex-shrink: 0;
@@ -203,8 +216,14 @@
     right:70px;
     border-radius:12px;
 }
+.delete-all-tasks a{
+    color:black;
+}
 .delete-all-tasks:hover{
     background:#f3f3f3;
+}
+.suggestions_confirm{
+    margin-top: 15px;
 }
 .suggestions_confirm a{
     text-decoration:none;
@@ -234,27 +253,33 @@
     background:#5a38db;
 }
 .subtask-tree {
-    list-style-type: none;
+    list-style-type: none !important;
     padding-left: 35px;
     margin: 5px 0 20px 0;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 900px;
+    position: relative;
 }
+
 .subtask-tree li {
     position: relative;
-    padding-left: 25px;
-    margin-bottom: 0px;
+    padding-left: 10px;
+    margin-bottom: 15px;
+    list-style: none !important;
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
 }
-.subtask-tree li::before {
+.subtask-tree::before {
     content: '';
     position: absolute;
-    top: -25px;
-    left: 0;
-    border-left: 2px solid #5a5a5a; 
-    border-bottom: 2px solid #5a5a5a;
-    width: 25px; 
-    height: 50px;
-    margin-top: 5px;
-    border-bottom-left-radius: 8px;
+    left: 12px;
+    top: 0px;
+    bottom: 25px;
+    border-left: 2px solid #000000; 
 }
-.subtask-tree li:last-child::before {
-    height: 55px; 
+
+.subtask-tree li::before,.subtask-tree li:last-child::before {
+    display: none;
 }
