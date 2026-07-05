@@ -15,8 +15,8 @@
     width:100%;
     max-width:900px;
     border-radius:18px;
-    padding:25px 35px;
-    margin-bottom:30px;
+    padding:15px 15px;
+    margin-bottom:15px;
     box-sizing:border-box;
     box-shadow:0px 8px 20px rgba(0, 0, 0, 0.308);
     transition:0.1s;
@@ -248,10 +248,11 @@
     position: absolute;
     top: -25px;
     left: 0;
-    border-left: 2px solid #b3b3b3; 
-    border-bottom: 2px solid #b3b3b3;
-    width: 20px; 
-    height: 55px;
+    border-left: 2px solid #5a5a5a; 
+    border-bottom: 2px solid #5a5a5a;
+    width: 25px; 
+    height: 50px;
+    margin-top: 5px;
     border-bottom-left-radius: 8px;
 }
 .subtask-tree li:last-child::before {

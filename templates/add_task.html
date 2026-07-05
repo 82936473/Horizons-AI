@@ -10,9 +10,9 @@
     {% block sidebar %} {{ super() }} {% endblock %}
 
     <main class="content">
-             <h1>Add Task</h1>
+             <h1>{{title}}</h1>
 
-        <form class="add-card" action="{{ url_for('add_task') }}" method="POST" id="task-card">
+        <form class="add-card" action="{{ submit_url }}" method="POST" id="task-card">
 
             <label>Task</label>
 

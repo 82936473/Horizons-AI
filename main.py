@@ -142,7 +142,35 @@ def add_task():
             flash(f"Something went wrong", "error")
             db.session.rollback()
         return redirect(url_for("dashboard"))
-    return render_template("add_task.html",status="add_task",title="Add Task",name=name)
+    return render_template("add_task.html",title="Add Task",name=name,submit_url=url_for('add_task'))
+
+@app.route('/add_subtask/<task_id>',methods=["POST",'GET'])
+@login_required
+def add_subtask(task_id):
+    user = User.query.get(session["user_id"])
+    name=user.name
+    if request.method=="POST":
+        try:
+            task = request.form["task"]
+            priority = request.form["priority"]
+            due_date = request.form["due_date"]
+            category= request.form["category"]
+            user_id=session["user_id"]
+            if not category:
+                category=None
+            if due_date:
+                due_date=date.fromisoformat(due_date)
+            else:
+                due_date=None
+            new_subtask = SubTask(parent_id=task_id,title=task,priority=priority,category=category,due_date=due_date,user_id=user_id)
+            db.session.add(new_subtask)
+            db.session.commit()
+            flash('Tasks added successfully!','success')
+        except:
+            flash(f"Something went wrong", "error")
+            db.session.rollback()
+        return redirect(url_for('dashboard'))
+    return render_template("add_task.html",title="Add SubTask",name=name,submit_url=url_for("add_subtask",task_id=task_id))
 
 @app.route('/edit/<int:task_id>', methods=['GET','POST'])
 @login_required
