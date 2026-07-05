@@ -15,7 +15,7 @@ tasks=None
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///horizons.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db.init_app(app)
-from models import CompletedTask, User, Task, AISuggestions 
+from models import CompletedTask, User, Task, AISuggestions, SubTask
 with app.app_context():
     db.create_all()
 
@@ -97,9 +97,12 @@ def log_in():
 @login_required
 def dashboard():
     sort = request.args.get("sort", "date")
-    query = Task.query.filter_by(user_id=session["user_id"])
     user = User.query.get(session["user_id"])
+    if user is None:
+        session.clear()
+        return redirect(url_for("login"))
     name=user.name
+    query = Task.query.filter_by(user_id=session["user_id"])
     if sort == "priority":
         query = query.order_by(case((Task.priority == "High", 1),(Task.priority == "Medium", 2),(Task.priority == "Low", 3),))
     elif sort == "name":
@@ -107,7 +110,6 @@ def dashboard():
     else:
         query = query.order_by(Task.due_date)
     tasks = query.all()
-
     return render_template("dashboard.html",title="Dashboard",tasks=tasks,status="dashboard",name=name)
 @app.route("/add", methods=["GET", "POST"])
 @login_required
@@ -122,10 +124,12 @@ def add_task():
             category= request.form["category"]
             user_id=session["user_id"]
             evaluate=decision_maker.evaluate_task(task)
+            if not category:
+                category=None
             if evaluate=="yes":
                 evaluate=True
             else :
-                evaluate=None
+                evaluate=False
             if due_date:
                 due_date=date.fromisoformat(due_date)
             else:
@@ -134,133 +138,209 @@ def add_task():
             db.session.add(new_task)
             db.session.commit()
             flash("Task added successfully!", "success")
-        except Exception as e:
-            print(e)
+        except :
             flash(f"Something went wrong", "error")
+            db.session.rollback()
         return redirect(url_for("dashboard"))
     return render_template("add_task.html",status="add_task",title="Add Task",name=name)
 
-@app.route('/edit/<int:task_id>/<source>', methods=['GET','POST'])
+@app.route('/edit/<int:task_id>', methods=['GET','POST'])
 @login_required
-def edit_task(task_id,source):
+def edit_task(task_id):
     user = User.query.get(session["user_id"])
     name=user.name
-    if source=='None':
-        task=Task.query.filter_by(id=task_id,user_id=session["user_id"]).first_or_404()
-        if request.method=="POST":
-            try:
-                updated_task=request.form["task"]
-                task.title=updated_task
-                task.priority=request.form['priority']
-                task.category=request.form['category']
-                due_date=request.form['due_date']
-                if due_date:
-                    from datetime import date
-                    task.due_date = date.fromisoformat(due_date)
-                else:
-                    task.due_date = None
-                evaluate=decision_maker.evaluate_task(updated_task)
-                if evaluate=="yes":
-                    evaluate=True
-                else :
-                    evaluate=False
-                task.evaluate=evaluate
-                db.session.commit()
-                flash("Task updated successfully!", "success")
-            except Exception:
-                flash("Something went wrong", "error")
-            return redirect(url_for("dashboard"))
-    else:
-        task=AISuggestions.query.filter_by(id=task_id,user_id=session["user_id"]).first_or_404()
-        if request.method=="POST":
-            try:
-                task.title=request.form["task"]
-                task.priority=request.form['priority']
-                task.category=request.form['category']
-                due_date=request.form['due_date']
-                if due_date:
-                    from datetime import date
-                    task.due_date = date.fromisoformat(due_date)
-                else:
-                    task.due_date = None
-                db.session.commit()
-                flash("Task updated successfully!", "success")
-                tasks=AISuggestions.query.filter_by(user_id=session["user_id"])
-            except Exception:
-                flash("Something went wrong", "error")
-            return render_template("ai_suggestions.html",title="suggestions",tasks=tasks,id=source,name=name)
-    return render_template("edit_task.html", task=task, source=source,name=name)
-
-
-@app.route('/delete/<int:task_id>/<source>/<status>')
-@login_required
-def delete_task(task_id, source, status):
-    user = User.query.get(session["user_id"])
-    name=user.name
-    try:
-        if source=='None':
-                task=Task.query.filter_by(id=task_id,user_id=session["user_id"]).first_or_404()
-                db.session.delete(task)
-                db.session.commit()
-                if status=="complete":
-                    flash("Task completed!", "success")
-                elif status=="None":
-                    flash("Task deleted successfully!", "success")
-                return redirect(url_for("dashboard"))
-        elif source=='completed_source':
-                task=CompletedTask.query.filter_by(id=task_id,user_id=session["user_id"]).first_or_404()
-                db.session.delete(task)
-                db.session.commit()
-                flash("Task deleted successfully!", "success")
-                return redirect(url_for("completed_tasks"))
-        else:
-            task=AISuggestions.query.filter_by(id=task_id,user_id=session["user_id"]).first_or_404()
-            db.session.delete(task)
-            db.session.commit()
-            flash("Task deleted successfully!", "success")
-            tasks=AISuggestions.query.filter_by(user_id=session["user_id"])
-            return render_template("ai_suggestions.html",title="suggestions",tasks=tasks,id=source,name=name)
-    except:
-        flash("Something went wrong", "error")
-    
-
-@app.route('/delete_all/<source>')
-@login_required
-def delete_all_tasks(source):
-    if source=='None':
+    task=Task.query.filter_by(id=task_id,user_id=session["user_id"]).first_or_404()
+    if request.method=="POST":
         try:
-            Task.query.filter_by(user_id=session["user_id"]).delete()
+            updated_task=request.form["task"]
+            task.title=updated_task
+            task.priority=request.form['priority']
+            task.category=request.form['category']
+            due_date=request.form['due_date']
+            if due_date:
+                from datetime import date
+                task.due_date = date.fromisoformat(due_date)
+            else:
+                task.due_date = None
+            evaluate=decision_maker.evaluate_task(updated_task)
+            if evaluate=="yes":
+                evaluate=True
+            else :
+                evaluate=False
+            task.evaluate=evaluate
             db.session.commit()
-            flash("All tasks deleted successfully!", "success")
-        except Exception:
-            flash(f"Something went wrong", "error")
-        return redirect(url_for("dashboard"))
-    elif source=='completed_source':
-        try:
-            CompletedTask.query.filter_by(user_id=session["user_id"]).delete()
-            db.session.commit()
-            flash("All tasks deleted successfully!", "success")
+            flash("Task updated successfully!", "success")
         except Exception:
             flash("Something went wrong", "error")
-        return redirect(url_for("completed_tasks"))
+            db.session.rollback()
+        return redirect(url_for("dashboard"))
+    return render_template("edit_task.html", task=task,name=name,submit_url=url_for('edit_task',task_id=task.id))
 
-@app.route('/complete/<int:task_id>/<task_title>/<due_date>')
+@app.route('/edit_suggestion_task/<task_id>/<_id_>',methods=['POST','GET'])
 @login_required
-def complete_task(task_id,task_title,due_date):
+def edit_suggestion_task(task_id,_id_):
+    user = User.query.get(session["user_id"])
+    name=user.name
+    task=AISuggestions.query.filter_by(id=task_id,user_id=session["user_id"]).first_or_404()
+    if request.method=="POST":
+        try:
+            task.title=request.form["task"]
+            task.priority=request.form['priority']
+            task.category=request.form['category']
+            due_date=request.form['due_date']
+            if due_date:
+                from datetime import date
+                task.due_date = date.fromisoformat(due_date)
+            else:
+                task.due_date = None
+            db.session.commit()
+            flash("Task updated successfully!", "success")
+            tasks=AISuggestions.query.filter_by(user_id=session["user_id"])
+        except Exception:
+            flash("Something went wrong", "error")
+            db.session.rollback()
+        return render_template("ai_suggestions.html",title="suggestions",tasks=tasks,id=_id_,name=name)
+    return render_template("edit_task.html", task=task, id=_id_,name=name,submit_url=url_for('edit_suggestion_task',task_id=task.id,_id_=_id_))
+
+@app.route('/edit_subtask/<subtask_id>',methods=['POST','GET'])
+@login_required
+def edit_subtask(subtask_id):
+    user = User.query.get(session["user_id"])
+    name=user.name
+    subtask=SubTask.query.filter_by(id=subtask_id,user_id=session["user_id"]).first_or_404()
+    if request.method=="POST":
+        try:
+            subtask.title=request.form["task"]
+            subtask.priority=request.form['priority']
+            subtask.category=request.form['category']
+            due_date=request.form['due_date']
+            if due_date:
+                from datetime import date
+                subtask.due_date = date.fromisoformat(due_date)
+            else:
+                subtask.due_date = None
+            db.session.commit()
+            flash("Task updated successfully!", "success")
+        except Exception:
+            flash("Something went wrong", "error")
+            db.session.rollback()
+        return redirect(url_for('dashboard'))
+    return render_template("edit_task.html", task=subtask,name=name,submit_url=url_for('edit_subtask',subtask_id=subtask.id))
+
+@app.route('/delete/<int:task_id>/<status>')
+@login_required
+def delete_task(task_id,status):
+    user = User.query.get(session["user_id"])
+    name=user.name
     try:
-        task = task_title
-        due_date = due_date
-        if due_date!='None':
-                due_date=date.fromisoformat(due_date)
-        else:
-                due_date=None
+        task=Task.query.filter_by(id=task_id,user_id=session["user_id"]).first_or_404()
+        db.session.delete(task)
+        db.session.commit()
+        if status=="complete":
+            flash("Task completed!", "success")
+        elif status=="None":
+            flash("Task deleted successfully!", "success")
+            db.session.rollback()
+        return redirect(url_for("dashboard"))
+    except:
+        flash("Something went wrong", "error")
+
+@app.route("/delete_suggestion_task/<int:task_id>/<_id_>")
+@login_required
+def delete_suggestion_task(task_id,_id_):
+    user = User.query.get(session["user_id"])
+    name=user.name
+    try:
+        task = AISuggestions.query.filter_by(id=task_id, user_id=session["user_id"]).first_or_404()
+        db.session.delete(task)
+        db.session.commit()
+        flash("Task deleted successfuly!", "success")
+    except Exception:
+        flash("Something went wrong.", "error")
+        db.session.rollback()
+    return render_template("ai_suggestions.html",title="suggestions",tasks=tasks,id=_id_,name=name)
+
+
+@app.route("/delte_completed_task/<int:task_id>")
+@login_required
+def delete_completed_task(task_id):
+    try:
+        task = CompletedTask.query.filter_by(id=task_id, user_id=session["user_id"]).first_or_404()
+        db.session.delete(task)
+        db.session.commit()
+        flash("Task deleted successfuly!", "success")
+    except Exception:
+        flash("Something went wrong.", "error")
+        db.session.rollback()
+    return redirect(url_for("completed_tasks"))
+
+@app.route("/delete_subtask/<int:subtask_id>")
+@login_required
+def delete_subtask(subtask_id):
+    try:
+        subtask = SubTask.query.filter_by(id=subtask_id, user_id=session["user_id"]).first_or_404()
+        db.session.delete(subtask)
+        db.session.commit()
+        flash("Subtask deleted successfuly!", "success")
+    except Exception:
+        db.session.rollback()
+        flash("Something went wrong.", "error")
+        
+    return redirect(url_for("dashboard"))
+
+@app.route('/delete_all')
+@login_required
+def delete_all_tasks():
+    try:
+        Task.query.filter_by(user_id=session["user_id"]).delete()
+        db.session.commit()
+        flash("All tasks deleted successfully!", "success")
+    except Exception:
+        flash(f"Something went wrong", "error")
+        db.session.rollback()
+    return redirect(url_for("dashboard"))
+
+@app.route('/delete_all_completed_tasks')
+@login_required
+def delete_all_completed_tasks():
+    try:
+        CompletedTask.query.filter_by(user_id=session["user_id"]).delete()
+        db.session.commit()
+        flash("All tasks deleted successfully!", "success")
+    except Exception:
+        flash("Something went wrong", "error")
+        db.session.rollback()
+    return redirect(url_for("completed_tasks"))
+
+@app.route('/complete_task/<int:task_id>')
+@login_required
+def complete_task(task_id):
+    try:
+        task=Task.query.filter_by(id=task_id,user_id=session["user_id"]).first_or_404()
+        title = task.title
+        due_date = task.due_date
+        completed_task = CompletedTask(title=title,due_date=due_date,user_id=session["user_id"])
+        db.session.add(completed_task)
+        db.session.commit()
+    except Exception:
+            flash("Something went wrong", "error")
+            db.session.rollback()
+    return redirect(url_for("delete_task", task_id=task_id,status="complete"))
+
+@app.route('/complete_subtask/<int:subtask_id>')
+@login_required
+def complete_subtask(subtask_id):
+    try:
+        task=SubTask.query.filter_by(id=subtask_id,user_id=session["user_id"]).first_or_404()
+        task = task.title
+        due_date = task.due_date
         completed_task = CompletedTask(title=task,due_date=due_date,user_id=session["user_id"])
         db.session.add(completed_task)
         db.session.commit()
     except:
             flash("Something went wrong", "error")
-    return redirect(url_for("delete_task", task_id=task_id, source='None', status="complete"))
-
+            db.session.rollback()
+    return redirect(url_for("delete_subtask", subtask_id=subtask_id))
 
 @app.route('/completed')
 @login_required
@@ -271,9 +351,10 @@ def completed_tasks():
         tasks = CompletedTask.query.filter_by(user_id=session["user_id"]).all()
     except:
         flash("Something went wrong", "error")
+        db.session.rollback()
     return render_template("completed.html", title="Completed Tasks", tasks=tasks, status="completed_tasks",name=name)
 
-@app.route('/break-down/<task><task_id>',methods=['GET','POST'])
+@app.route('/break-down/<task>/<task_id>',methods=['GET','POST'])
 @login_required
 def break_down(task,task_id):
     user = User.query.get(session["user_id"])
@@ -287,26 +368,28 @@ def break_down(task,task_id):
         breaked_tasks =AISuggestions.query.filter_by(user_id=session["user_id"]).all()
     except:
         flash('Something went wrong','error')
+        db.session.rollback()
     return render_template("ai_suggestions.html",title="suggestions",tasks=breaked_tasks,id=task_id,name=name)
 
 @app.route('/confirm-break-down/<task_id>')
 @login_required
 def confirm_break_down(task_id):
     try:
-        tasks = AISuggestions.query.filter_by(user_id=session["user_id"])
-        for i in tasks:
-            new_task = Task(title=i.title,priority=i.priority,category=i.category,due_date=i.due_date,user_id=session["user_id"])
+        suggestions = AISuggestions.query.filter_by(user_id=session["user_id"])
+        for i in suggestions:
+            new_task = SubTask(parent_id=task_id,title=i.title,priority=i.priority,category=i.category,due_date=i.due_date,user_id=session["user_id"])
             db.session.add(new_task)
-            db.session.commit()
-        task=Task.query.filter_by(id=task_id,user_id=session["user_id"]).first_or_404()
-        db.session.delete(task)
-        tasks.delete()
-        tasks=Task.query.filter_by(user_id=session["user_id"])
+            db.session.delete(i)
+        Task.query.filter_by(user_id=session["user_id"],id=task_id).first_or_404().evaluate=False
         db.session.commit()
         flash('Tasks added successfully!','success')
-    except:
+    except Exception as e:
+            print(f"------------------{e}")
             flash("Something went wrong", "error")
+            db.session.rollback()
     return redirect(url_for('dashboard'))
+
+
 @app.route('/cancel-break-down')
 @login_required
 def cancel_break_down():
