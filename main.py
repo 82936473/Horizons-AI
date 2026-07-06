@@ -202,7 +202,7 @@ def edit_task(task_id):
             flash("Something went wrong", "error")
             db.session.rollback()
         return redirect(url_for("dashboard"))
-    return render_template("edit_task.html", task=task,name=name,submit_url=url_for('edit_task',task_id=task.id))
+    return render_template("edit_task.html", title='Edit Task',task=task,name=name,submit_url=url_for('edit_task',task_id=task.id))
 
 @app.route('/edit_suggestion_task/<task_id>/<_id_>',methods=['POST','GET'])
 @login_required
@@ -228,7 +228,7 @@ def edit_suggestion_task(task_id,_id_):
             flash("Something went wrong", "error")
             db.session.rollback()
         return render_template("ai_suggestions.html",title="suggestions",tasks=tasks,id=_id_,name=name)
-    return render_template("edit_task.html", task=task, id=_id_,name=name,submit_url=url_for('edit_suggestion_task',task_id=task.id,_id_=_id_))
+    return render_template("edit_task.html", title='Edit Task',task=task, id=_id_,name=name,submit_url=url_for('edit_suggestion_task',task_id=task.id,_id_=_id_))
 
 @app.route('/edit_subtask/<subtask_id>',methods=['POST','GET'])
 @login_required
@@ -253,7 +253,7 @@ def edit_subtask(subtask_id):
             flash("Something went wrong", "error")
             db.session.rollback()
         return redirect(url_for('dashboard'))
-    return render_template("edit_task.html", task=subtask,name=name,submit_url=url_for('edit_subtask',subtask_id=subtask.id))
+    return render_template("edit_task.html",title='Edit Subtask', task=subtask,name=name,submit_url=url_for('edit_subtask',subtask_id=subtask.id))
 
 @app.route('/delete/<int:task_id>/<status>')
 @login_required
