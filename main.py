@@ -6,10 +6,11 @@ from sqlalchemy import case
 from dotenv import load_dotenv
 from werkzeug.security import generate_password_hash, check_password_hash
 from ai_models import TaskBreakdown, TaskDecision
+from email_validator import validate_email,EmailNotValidError
 import ast
 import os
 app = Flask(__name__)
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=15)
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=1)
 load_dotenv()
 app.secret_key = os.environ.get("SECRET_KEY")
 tasks=None
@@ -31,13 +32,10 @@ def login_required(f):
     return decorated_function
 
 def purge_expired_tasks():
-    try:
-        expired_time=datetime.now(timezone.utc) - timedelta(hours=12)
-        expired_completed_tasks=CompletedTask.query.filter(CompletedTask.user_id==session['user_id'],CompletedTask.completed_at<=expired_time)
-        expired_completed_tasks.delete()
-        db.session.commit()
-    except:
-        pass
+    expired_time=datetime.now(timezone.utc) - timedelta(hours=12)
+    expired_completed_tasks=CompletedTask.query.filter(CompletedTask.user_id==session['user_id'],CompletedTask.completed_at<=expired_time)
+    expired_completed_tasks.delete()
+    db.session.commit()
 
 @app.route('/')
 @app.route('/home')
@@ -51,23 +49,25 @@ def sign_up():
          return redirect(url_for("dashboard"))
     error=None
     if request.method=='POST':
-        username = request.form.get("username")
-        password = request.form.get("password")
-        verify = request.form.get("verifypassword")
         try:
+            username = request.form.get("username")
+            password = request.form.get("password")
+            verify = request.form.get("verifypassword")
+            email = validate_email(username, check_deliverability=True)
+            valid_email = email.normalized
             if password != verify:
                 raise ValueError("Password do not match")
-            existing_user = User.query.filter_by(username=username).first()
+            existing_user=User.query.filter_by(username=valid_email).first()
             if existing_user:
-                raise ValueError("Username already exists")
-            new_user = User(username=username,name='',password=generate_password_hash(password))  #!#!
+                raise ValueError('An account with this email address already exists.')
+            new_user = User(username=valid_email,name='',password=generate_password_hash(password))
             db.session.add(new_user)
             db.session.commit()
             session["user_id"]=new_user.id
             session["username"]=new_user.username
             purge_expired_tasks()
             return redirect(url_for('user_name'))
-        except ValueError as e:
+        except (ValueError,EmailNotValidError) as e:
             error=str(e)
     return render_template('sign_up.html',title='Sign up',error=error)
 
@@ -93,7 +93,7 @@ def log_in():
         try:
             user = User.query.filter_by(username=username).first()
             if user is None or not check_password_hash(user.password, password):
-                raise ValueError("Incorrect Username or Password")
+                raise ValueError("Invalid Email or Password")
             session["user_id"] = user.id
             session["username"] = user.username
             purge_expired_tasks()

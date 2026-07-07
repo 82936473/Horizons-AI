@@ -43,7 +43,7 @@
                         <button class="menuu">⋮</button>
 
                         <div class="dropdown-content">
-                            <a hx-delete="{{ url_for('delete_completed_task', task_id=task.id) }}" hx-target="#task-{{ task.id }}" hx-swap="delete swap:200ms"  hx-confirm="Are you sure you want to delete this task?" class=""><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-8₀v36₀Zm16₀ ₀h8₀v-36₀h-8₀v36₀ZM28₀-7₂₀v5₂₀-5₂₀Z"/></svg><span>Delete</span></a>                        
+                            <a hx-delete="{{ url_for('delete_completed_task', task_id=task.id) }}" hx-target="#task-{{ task.id }}" hx-swap="delete swap:200ms"  hx-confirm="Are you sure you want to delete this task?" class=""><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24"><path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360Z"/></svg><span>Delete</span></a>                        
                         </div>
 
                     </div>
@@ -52,9 +52,11 @@
                 <hr>
                 <div class="task-title">
                     <p> {{ task.title }} </p>
-                    <p class="expiry-timer">
-                        Expires in : {{task.formatted_time_left}}
-                    </p>
+                    {% if task.formatted_time_left %}
+                        <p class="expiry-timer">
+                            Expires in : {{task.formatted_time_left}}
+                        </p>
+                    {% endif %}
                 </div>
             </div>
 
