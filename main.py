@@ -37,6 +37,20 @@ def purge_expired_tasks():
     expired_completed_tasks.delete()
     db.session.commit()
 
+def check_strong_password(password):
+    if len(password) < 6:
+        raise ValueError("Password must be at least 6 characters long.")
+    if not any(char.isupper() for char in password):
+        raise ValueError("Password must contain at least one uppercase letter.")
+    if not any(char.islower() for char in password):
+        raise ValueError("Password must contain at least one lowercase letter.")
+    if not any(char.isdigit() for char in password):
+        raise ValueError("Password must contain at least one number.")
+    if not any(char in '@#$%!*&' for char in password):
+        raise ValueError("Password must contain at least one special character (@, #, $, %, !, *, &).")
+        
+    return True
+
 @app.route('/')
 @app.route('/home')
 def home():
@@ -55,6 +69,7 @@ def sign_up():
             verify = request.form.get("verifypassword")
             email = validate_email(username, check_deliverability=True)
             valid_email = email.normalized
+            check_strong_password(password)
             if password != verify:
                 raise ValueError("Password do not match")
             existing_user=User.query.filter_by(username=valid_email).first()
@@ -107,10 +122,10 @@ def log_in():
 @login_required
 def dashboard():
     sort = request.args.get("sort", "date")
-    user = User.query.get(session["user_id"])
+    user = User.query.filter_by(id=session["user_id"]).first()
     if user is None:
         session.clear()
-        return redirect(url_for("login"))
+        return redirect(url_for("log_in"))
     name=user.name
     query = Task.query.filter_by(user_id=session["user_id"])
     if sort == "priority":
