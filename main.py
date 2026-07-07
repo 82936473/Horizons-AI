@@ -165,7 +165,7 @@ def add_subtask(task_id):
             new_subtask = SubTask(parent_id=task_id,title=task,priority=priority,category=category,due_date=due_date,user_id=user_id)
             db.session.add(new_subtask)
             db.session.commit()
-            flash('Tasks added successfully!','success')
+            flash('SubTask added successfully!','success')
         except:
             flash(f"Something went wrong", "error")
             db.session.rollback()
@@ -255,25 +255,25 @@ def edit_subtask(subtask_id):
         return redirect(url_for('dashboard'))
     return render_template("edit_task.html",title='Edit Subtask', task=subtask,name=name,submit_url=url_for('edit_subtask',subtask_id=subtask.id))
 
-@app.route('/delete/<int:task_id>/<status>')
+@app.route('/delete/<int:task_id>', methods=['DELETE'])
 @login_required
-def delete_task(task_id,status):
-    user = User.query.get(session["user_id"])
-    name=user.name
+def delete_task(task_id):
     try:
         task=Task.query.filter_by(id=task_id,user_id=session["user_id"]).first_or_404()
         db.session.delete(task)
         db.session.commit()
-        if status=="complete":
-            flash("Task completed!", "success")
-        elif status=="None":
-            flash("Task deleted successfully!", "success")
-            db.session.rollback()
-        return redirect(url_for("dashboard"))
+        remaining = Task.query.filter_by(user_id=session["user_id"]).count()
+        if request.headers.get('HX-Request'):
+            if remaining==0:
+                return '<main class="content" id="tasks-container" hx-swap-oob="true"><h2>No active tasks.</h2></main>', 200
+            return f'''<ul class="subtask-tree" id="subtasks-{task_id}" hx-swap-oob="delete"></ul>''',200
     except:
-        flash("Something went wrong", "error")
+        db.session.rollback()
+        if request.headers.get('HX-Request'):
+            return "", 400
+    return redirect(url_for("dashboard"))
 
-@app.route("/delete_suggestion_task/<int:task_id>/<_id_>")
+@app.route("/delete_suggestion_task/<int:task_id>/<_id_>",methods=['DELETE'])
 @login_required
 def delete_suggestion_task(task_id,_id_):
     user = User.query.get(session["user_id"])
@@ -282,37 +282,44 @@ def delete_suggestion_task(task_id,_id_):
         task = AISuggestions.query.filter_by(id=task_id, user_id=session["user_id"]).first_or_404()
         db.session.delete(task)
         db.session.commit()
-        flash("Task deleted successfuly!", "success")
-    except Exception:
-        flash("Something went wrong.", "error")
+        if request.headers.get('HX-Request'):
+            return ""
+    except Exception as e:
+        print(f"-------------------------{e}")
         db.session.rollback()
+        if request.headers.get('HX-Request'):
+            return "",400
     return render_template("ai_suggestions.html",title="suggestions",tasks=tasks,id=_id_,name=name)
 
 
-@app.route("/delte_completed_task/<int:task_id>")
+@app.route("/delte_completed_task/<int:task_id>",methods=['DELETE'])
 @login_required
 def delete_completed_task(task_id):
     try:
         task = CompletedTask.query.filter_by(id=task_id, user_id=session["user_id"]).first_or_404()
         db.session.delete(task)
         db.session.commit()
-        flash("Task deleted successfuly!", "success")
-    except Exception:
-        flash("Something went wrong.", "error")
+        if request.headers.get('HX-Request'):
+            return ""
+    except :
         db.session.rollback()
+        if request.headers.get('HX-Request'):
+            return "",400
     return redirect(url_for("completed_tasks"))
 
-@app.route("/delete_subtask/<int:subtask_id>")
+@app.route("/delete_subtask/<int:subtask_id>",methods=['DELETE'])
 @login_required
 def delete_subtask(subtask_id):
     try:
         subtask = SubTask.query.filter_by(id=subtask_id, user_id=session["user_id"]).first_or_404()
         db.session.delete(subtask)
         db.session.commit()
-        flash("Subtask deleted successfuly!", "success")
+        if request.headers.get('HX-Request'):
+            return ""
     except Exception:
         db.session.rollback()
-        flash("Something went wrong.", "error")
+        if request.headers.get('HX-Request'):
+            return ""
         
     return redirect(url_for("dashboard"))
 
@@ -340,7 +347,7 @@ def delete_all_completed_tasks():
         db.session.rollback()
     return redirect(url_for("completed_tasks"))
 
-@app.route('/complete_task/<int:task_id>')
+@app.route('/complete_task/<int:task_id>', methods=['POST'])
 @login_required
 def complete_task(task_id):
     try:
@@ -349,26 +356,37 @@ def complete_task(task_id):
         due_date = task.due_date
         completed_task = CompletedTask(title=title,due_date=due_date,user_id=session["user_id"])
         db.session.add(completed_task)
+        db.session.delete(task)
         db.session.commit()
+        remaining = Task.query.filter_by(user_id=session["user_id"]).count()
+        if request.headers.get("HX-Request"):
+            if remaining==0:
+                return '<main class="content" id="tasks-container" hx-swap-oob="true"><h2>No active tasks.</h2></main>', 200
+            return f'''<ul class="subtask-tree" id="subtasks-{task_id}" hx-swap-oob="delete"></ul>''',200
     except Exception:
-            flash("Something went wrong", "error")
             db.session.rollback()
-    return redirect(url_for("delete_task", task_id=task_id,status="complete"))
+            if request.headers.get("HX-Request"):
+                return "",400
+    return redirect(url_for("dashboard"))
 
-@app.route('/complete_subtask/<int:subtask_id>')
+@app.route('/complete_subtask/<int:subtask_id>',methods=['POST'])
 @login_required
 def complete_subtask(subtask_id):
     try:
         task=SubTask.query.filter_by(id=subtask_id,user_id=session["user_id"]).first_or_404()
-        task = task.title
+        title = task.title
         due_date = task.due_date
-        completed_task = CompletedTask(title=task,due_date=due_date,user_id=session["user_id"])
+        completed_task = CompletedTask(title=title,due_date=due_date,user_id=session["user_id"])
         db.session.add(completed_task)
+        db.session.delete(task)
         db.session.commit()
+        if request.headers.get("HX-Request"):
+            return ""
     except:
-            flash("Something went wrong", "error")
             db.session.rollback()
-    return redirect(url_for("delete_subtask", subtask_id=subtask_id))
+            if request.headers.get("HX-Request"):
+                return "",400
+    return redirect(url_for("dashboard"))
 
 @app.route('/completed')
 @login_required

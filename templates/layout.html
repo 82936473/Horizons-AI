@@ -7,6 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{url_for('static',filename='css/sidebar.css')}}">
     <link rel="stylesheet" href="{{url_for('static',filename='css/nav.css')}}">
+    <script src="https://unpkg.com/htmx.org@2.0.0"></script>
     {% block head %}{% endblock head%}
     <style>
         body{
@@ -50,11 +51,51 @@
         {% endblock sidebar %}
         {% block sidebar_script %}
             <script>
-            const sidebar = document.querySelector(".sidebar");
-            const button = document.getElementById("toggle-btn");
-            bif (window.matchMedia("(hover: none)").matches) {button.addEventListener("click", () => {sidebar.classList.toggle("open");});}
+                document.addEventListener("DOMContentLoaded", () => {
+                const sidebar = document.querySelector(".sidebar");
+                const button = document.getElementById("toggle-btn");
+                if (window.matchMedia("(hover: none)").matches) {if (button && sidebar) {button.addEventListener("click", () => {sidebar.classList.toggle("open");});}}});
             </script>
         {% endblock %}
+        {% block flashscript %}
+        <script>
+        document.body.addEventListener("htmx:afterRequest", function (event) {
+        const url = event.detail.pathInfo.requestPath;
+        if (!event.detail.successful) { showFlash("Something went wrong!", "error"); return; }
+        
+        if ((url.startsWith("/delete/")) || (url.startsWith("/delete_suggestion_task/")) || (url.startsWith("/delte_completed_task/"))){
+            showFlash("Task deleted successfully!");
+        }
+
+        if (url.startsWith("/delete_subtask/")) {
+            showFlash("SubTask deleted successfully!");
+        }
+        if (url.startsWith("/complete_task/")) {
+            showFlash("Task Completed!");
+        }
+        if (url.startsWith("/complete_subtask/")) {
+            showFlash("SubTask Completed!");
+        }
+
+        function showFlash(message) {
+            const container = document.getElementById("flash-container");
+            const flash = document.createElement("div");
+            flash.className = "flash";
+
+            flash.innerHTML = `
+                <button class="btn btn-primary">
+                    ${message}
+                </button>
+            `;
+
+            container.appendChild(flash);
+
+            setTimeout(() => flash.remove(), 5000);
+        }
+        });
+        </script>
+        
+        {% endblock flashscript %}
     {% endblock content%}
 </body>
 </html>

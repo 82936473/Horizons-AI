@@ -29,9 +29,6 @@
     box-shadow:0px 8px 20px rgba(0, 0, 0, 0.308);
     transition:0.1s;
 }
-.toolbar .dropdown-content{
-    background:rgba(201, 200, 200, 0.404);
-}
 .task-card:hover{
     transform:translateY(-8px);
 }
@@ -86,16 +83,18 @@
     overflow:hidden;
 }
 
-.dropdown-content a,.delete-all-tasks a{
+.dropdown-content a{
     display:flex;
+    border-radius: 12px;
     align-items: center;
     padding:14px 18px;
     text-decoration:none;
-    color:black;
+    background-color: #2a2a2a;
+    color:#ffffff;
 }
 
 .dropdown-content a:hover{
-    background:#f3f3f3;
+    background-color: #3d3d3d;
 }
 .task-title{
     overflow-wrap: break-word;
@@ -166,6 +165,26 @@
     right:70px;
     border-radius: 12px;
 }
-.delete-all-tasks a:hover{
-    background:#f3f3f3;
+.delete-all-tasks a{
+    display:flex;
+    border-radius: 12px;
+    align-items: center;
+    padding:14px 18px;
+    text-decoration:none;
+    background-color: white;
+    color:black;
+}
+.delete-all-tasks :hover{
+    background:#3d3d3d;
+    color:white;
+}
+.task-card{
+    transition:
+        opacity 200ms ease-out,
+        transform 200ms ease-out;
+}
+.task-card.htmx-swapping{
+    opacity: 0;
+    transform: scale(0.9) translateY(10px);
+    transition: opacity 200ms ease-out, transform 200ms ease-out;
 }
