@@ -22,7 +22,7 @@
         gap: 10px;
 
      }
-     input{
+     .input{
              text-align: center;
              width: 500px;
              height: 40px;
@@ -62,9 +62,22 @@
 <h1>Sign up to organize your tasks intelligently</h1>
 <form action="{{ url_for('sign_up') }}" method="POST">
 <div id="signing_container">
-    <input type="text" name="username" placeholder="Email" required>
-    <input type="password" name="password" placeholder="Password" required>
-    <input type="password" name="verifypassword" placeholder="Verify Password" required>
+    <input class="input" type="text" name="username" placeholder="Email" required>
+    <input class="input" type="password" name="password" placeholder="Password" required>
+    <input class="input" type="password" name="verifypassword" placeholder="Verify Password" required>
+    <div style="margin-top: 6px; display: flex; align-items: center; gap: 6px;">
+        <input type="checkbox" onchange="this.form.password.type=this.checked?'text':'password'; this.form.verifypassword.type=this.checked?'text':'password'">
+        <label for="show-pass" style="font-size: 12px; color: #555; cursor: pointer; user-select: none;">Show password</label>
+    </div>
+    <div style="margin-top: 12px; padding: 10px; background-color: #f8fafc; border-left: 3px solid #3b82f6; border-radius: 4px;">
+        <p style="margin: 0 0 6px 0; font-size: 12px; font-weight: 600; color: #475569;">🔑 Password Requirements:</p>
+        <ul style="margin: 0; padding-left: 16px; font-size: 12px; color: #64748b; line-height: 1.5;">
+            <li>Minimum 8 characters long</li>
+            <li>At least one uppercase letter (A-Z) and one lowercase (a-z)</li>
+            <li>At least one number (0-9)</li>
+            <li>At least one symbol (e.g., @, #, $, %, !, *, &)</li>
+        </ul>
+    </div>
     <input class="submit" type="submit"  value="Sign up" >
     {% if error %}
     <p style="color:red;">{{ error }}</p>

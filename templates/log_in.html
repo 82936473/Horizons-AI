@@ -27,7 +27,7 @@
      a{
       text-decoration:none;
      }
-      input{
+      .input{
              text-align: center;
              width: 500px;
              height: 40px;
@@ -60,8 +60,12 @@
 <h1>Log in to your account</h1>
 <form action="{{ url_for('log_in') }}" method="POST">
 <div id="signing_container">
-    <input type="text" name="username" placeholder="Email" required>
-    <input type="password" name="password" placeholder="Password" required>
+    <input class="input" type="text" name="username" placeholder="Email" required>
+    <input class="input" type="password" name="password" placeholder="Password" required>
+    <div style="margin-top: 6px; display: flex; align-items: center; gap: 6px;">
+        <input type="checkbox" onchange="this.form.password.type=this.checked?'text':'password'>
+        <label for="show-pass" style="font-size: 12px; color: #555; cursor: pointer; user-select: none;">Show password</label>
+    </div>
     <input class="submit" type="submit" value="Log in">
     {% if error %}
     <p style="color:red;">{{ error }}</p>
