@@ -55,3 +55,5 @@ class CompletedTask(db.Model):
     title = db.Column(db.String(300),nullable=False)
     due_date = db.Column(db.Date,nullable=True)
     user_id = db.Column(db.Integer,db.ForeignKey("user.id"),nullable=False)
+    completed_at = db.Column(db.DateTime, nullable=True)
+    time_left = db.Column(db.DateTime, nullable=True)

@@ -1,5 +1,5 @@
 from flask import Flask, render_template,request,redirect,url_for,session,flash
-from datetime import date
+from datetime import date,datetime,timezone,timedelta
 from functools import wraps
 from database import db
 from sqlalchemy import case 
@@ -9,6 +9,7 @@ from ai_models import TaskBreakdown, TaskDecision
 import ast
 import os
 app = Flask(__name__)
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=15)
 load_dotenv()
 app.secret_key = os.environ.get("SECRET_KEY")
 tasks=None
@@ -18,7 +19,6 @@ db.init_app(app)
 from models import CompletedTask, User, Task, AISuggestions, SubTask
 with app.app_context():
     db.create_all()
-
 decision_maker=TaskDecision()
 breaker=TaskBreakdown()
 def login_required(f):
@@ -30,6 +30,14 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+def purge_expired_tasks():
+    try:
+        expired_time=datetime.now(timezone.utc) - timedelta(hours=12)
+        expired_completed_tasks=CompletedTask.query.filter(CompletedTask.user_id==session['user_id'],CompletedTask.completed_at<=expired_time)
+        expired_completed_tasks.delete()
+        db.session.commit()
+    except:
+        pass
 
 @app.route('/')
 @app.route('/home')
@@ -57,6 +65,7 @@ def sign_up():
             db.session.commit()
             session["user_id"]=new_user.id
             session["username"]=new_user.username
+            purge_expired_tasks()
             return redirect(url_for('user_name'))
         except ValueError as e:
             error=str(e)
@@ -87,6 +96,7 @@ def log_in():
                 raise ValueError("Incorrect Username or Password")
             session["user_id"] = user.id
             session["username"] = user.username
+            purge_expired_tasks()
             return redirect(url_for("dashboard"))
         except ValueError as e:
             error=str(e)
@@ -354,7 +364,7 @@ def complete_task(task_id):
         task=Task.query.filter_by(id=task_id,user_id=session["user_id"]).first_or_404()
         title = task.title
         due_date = task.due_date
-        completed_task = CompletedTask(title=title,due_date=due_date,user_id=session["user_id"])
+        completed_task = CompletedTask(title=title,due_date=due_date,user_id=session["user_id"],completed_at=datetime.now(timezone.utc))
         db.session.add(completed_task)
         db.session.delete(task)
         db.session.commit()
@@ -376,7 +386,7 @@ def complete_subtask(subtask_id):
         task=SubTask.query.filter_by(id=subtask_id,user_id=session["user_id"]).first_or_404()
         title = task.title
         due_date = task.due_date
-        completed_task = CompletedTask(title=title,due_date=due_date,user_id=session["user_id"])
+        completed_task = CompletedTask(title=title,due_date=due_date,user_id=session["user_id"],completed_at=datetime.now(timezone.utc))
         db.session.add(completed_task)
         db.session.delete(task)
         db.session.commit()
@@ -394,11 +404,21 @@ def completed_tasks():
     user = User.query.get(session["user_id"])
     name=user.name
     try:
+        purge_expired_tasks()
         tasks = CompletedTask.query.filter_by(user_id=session["user_id"]).all()
-    except:
+        for i in tasks:
+            expiration_time = i.completed_at + timedelta(hours=12)
+            i.time_left = expiration_time - datetime.utcnow()
+            total_seconds = int(i.time_left.total_seconds())
+            hours = total_seconds // 3600
+            minutes = (total_seconds % 3600) // 60
+            i.formatted_time_left = f"{hours}H {minutes}min"
+    except Exception as d:
+        print(f"======================={d}")
         flash("Something went wrong", "error")
         db.session.rollback()
     return render_template("completed.html", title="Completed Tasks", tasks=tasks, status="completed_tasks",name=name)
+
 
 @app.route('/break-down/<task>/<task_id>',methods=['GET','POST'])
 @login_required
