@@ -70,7 +70,8 @@ python main.py
 ## Future improvements
 * AI task assistant.
 * Task completion. Done
-* Add notifications.
+* Add flash notifications. Done
+* Send Emails.
 * multiple languages.
 * Dark mode.
 * More reactif componenets. Done

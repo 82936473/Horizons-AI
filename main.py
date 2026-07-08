@@ -215,15 +215,15 @@ def edit_task(task_id):
                 task.due_date = date.fromisoformat(due_date)
             else:
                 task.due_date = None
-            evaluate=decision_maker.evaluate_task(updated_task)
-            if evaluate=="yes":
-                evaluate=True
-            else :
-                evaluate=False
-            task.evaluate=evaluate
+            if not task.subtasks:
+                evaluate=decision_maker.evaluate_task(updated_task)
+                task.evaluate=False
+                if evaluate=="yes":
+                    evaluate=True
             db.session.commit()
             flash("Task updated successfully!", "success")
-        except Exception:
+        except Exception as e:
+            print(f"-------------------{e}")
             flash("Something went wrong", "error")
             db.session.rollback()
         return redirect(url_for("dashboard"))
@@ -441,9 +441,9 @@ def break_down(task,task_id):
     user = User.query.get(session["user_id"])
     name=user.name
     try:
-        new_tasks=ast.literal_eval(breaker.break_down_task(task))
-        for i in new_tasks:
-            new_task = AISuggestions(title=i[0],priority=i[1],category=i[2],due_date=None,user_id=session["user_id"])
+        subtasks=breaker.break_down_task(task)
+        for subtask in subtasks:
+            new_task = AISuggestions(title=subtask['subtask'],priority=subtask['priority'],due_date=None,user_id=session["user_id"])
             db.session.add(new_task)
             db.session.commit()
         breaked_tasks =AISuggestions.query.filter_by(user_id=session["user_id"]).all()

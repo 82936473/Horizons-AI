@@ -256,14 +256,13 @@ svg{
 .toggle-arrow {
     background: none;
     border: none;
-    font-size: 20px;
     cursor: pointer;
     padding: 0px;
     margin:0;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    color: #5a5a5a;
+    color: #000000;
     transition: transform 0.4s cubic-bezier(0.4,0,0.2,1);
     user-select: none;
     margin-left: auto;
@@ -285,12 +284,14 @@ svg{
     position: relative;
     max-height: 1500px;
     opacity: 1;
-    /* overflow: hidden; */
-    transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease, margin 0.4s ease;
+    visibility: visible;
+    transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease, margin 0.4s ease, visibility 0.4s;
 }
 .subtask-tree.hide-subtasks {
     max-height: 0;
     opacity: 0 ; 
+    visibility: hidden;
+    overflow: hidden;
     margin-top: 0;
     margin-bottom: 0;
     padding-top:0;
