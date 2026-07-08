@@ -307,8 +307,7 @@ def delete_suggestion_task(task_id,_id_):
         db.session.commit()
         if request.headers.get('HX-Request'):
             return ""
-    except Exception as e:
-        print(f"-------------------------{e}")
+    except:
         db.session.rollback()
         if request.headers.get('HX-Request'):
             return "",400
@@ -426,8 +425,7 @@ def completed_tasks():
             hours = total_seconds // 3600
             minutes = (total_seconds % 3600) // 60
             i.formatted_time_left = f"{hours}H {minutes}min"
-    except Exception as d:
-        print(f"======================={d}")
+    except:
         flash("Something went wrong", "error")
         db.session.rollback()
     return render_template("completed.html", title="Completed Tasks", tasks=tasks, status="completed_tasks",name=name)
@@ -462,8 +460,7 @@ def confirm_break_down(task_id):
         Task.query.filter_by(user_id=session["user_id"],id=task_id).first_or_404().evaluate=False
         db.session.commit()
         flash('Tasks added successfully!','success')
-    except Exception as e:
-            print(f"------------------{e}")
+    except:
             flash("Something went wrong", "error")
             db.session.rollback()
     return redirect(url_for('dashboard'))
@@ -492,10 +489,8 @@ def logout():
 #!    db.create_all()
 with app.app_context():
     if os.environ.get("RESET_DB") == "True":
-        print("Wiping and recreating the database...")
         db.drop_all()
         db.create_all()
-        print("Database reset complete!")
     else:
         db.create_all()
 if __name__ == "__main__":

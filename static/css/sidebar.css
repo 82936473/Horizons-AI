@@ -141,3 +141,11 @@
 li.bottom-item:first-of-type,li.profile{
     margin-top: auto;
 }
+.app-title {
+    margin-right:auto;
+    margin-top:12px;
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: #202124;
+    letter-spacing: -0.5px;
+}
