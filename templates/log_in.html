@@ -50,30 +50,29 @@
             cursor:pointer;
         }
 </style>
-{% endblock head%}
-{% block content%}
+{% endblock head %}
+{% block content %}
 
 {% block nav %} {{super()}} {% endblock nav %}
 
 <div class="main-container">
-<div class="main">
-<h1>Log in to your account</h1>
-<form action="{{ url_for('log_in') }}" method="POST">
-<div id="signing_container">
-    <input class="input" type="text" name="username" placeholder="Email" required>
-    <input class="input" type="password" name="password" placeholder="Password" required>
-    <div style="margin-top: 6px; display: flex; align-items: center; gap: 6px;">
-        <input type="checkbox" onchange="this.form.password.type=this.checked?'text':'password'>
-        <label for="show-pass" style="font-size: 12px; color: #555; cursor: pointer; user-select: none;">Show password</label>
-    </div>
-    <input class="submit" type="submit" value="Log in">
-    {% if error %}
-    <p style="color:red;">{{ error }}</p>
-    {%endif%}
-    <a href="{{ url_for('sign_up') }}">Don't have an account?</a>
+  <div class="main">
+      <h1>Log in to your account</h1>
+      <form action="{{ url_for('log_in') }}" method="POST">
+          <div id="signing_container">
+              <input class="input" type="text" name="username" placeholder="Email" required>
+              <input class="input" type="password" name="password" placeholder="Password" required>
+              <div style="margin-top: 6px; display: flex; align-items: center; gap: 6px;">
+                  <input type="checkbox" onchange="this.form.password.type=this.checked?'text':'password'">
+                  <label for="show-pass" style="font-size: 12px; color: #555; cursor: pointer; user-select: none;">Show password</label>
+              </div>
+              <input class="submit" type="submit" value="Log in">
+              {% if error %}
+                <p style="color:red;">{{ error }}</p>
+              {% endif %}
+              <a href="{{ url_for('sign_up') }}">Don't have an account?</a>
+          </div>
+      </form>
+  </div>
 </div>
-</form>
-</div>
-</div>
-
-{% endblock content%}
+{% endblock content %}

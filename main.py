@@ -5,7 +5,7 @@ from database import db
 from sqlalchemy import case 
 from dotenv import load_dotenv
 from werkzeug.security import generate_password_hash, check_password_hash
-from ai_models import TaskBreakdown, TaskDecision
+from ai_models import AIModels
 from email_validator import validate_email,EmailNotValidError
 import os
 app = Flask(__name__)
@@ -19,8 +19,7 @@ db.init_app(app)
 from models import CompletedTask, User, Task, AISuggestions, SubTask
 with app.app_context():
     db.create_all()
-decision_maker=TaskDecision()
-breaker=TaskBreakdown()
+AIModels=AIModels()
 def login_required(f):
 
     @wraps(f)
@@ -147,7 +146,7 @@ def add_task():
             due_date = request.form["due_date"]
             category= request.form["category"]
             user_id=session["user_id"]
-            evaluate=decision_maker.evaluate_task(task)
+            evaluate=AIModels.evaluate_task(task)
             if not category:
                 category=None
             if evaluate=="yes":
@@ -437,7 +436,7 @@ def break_down(task,task_id):
     user = User.query.get(session["user_id"])
     name=user.name
     try:
-        subtasks=breaker.break_down_task(task)
+        subtasks=AIModels.break_down_task(task)
         for subtask in subtasks:
             new_task = AISuggestions(title=subtask['subtask'],priority=subtask['priority'],due_date=None,user_id=session["user_id"])
             db.session.add(new_task)
