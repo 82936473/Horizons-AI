@@ -291,12 +291,11 @@ svg{
     max-height: 0;
     opacity: 0 ; 
     visibility: hidden;
-    overflow: hidden;
+    overflow: hidden !important;
     margin-top: 0;
     margin-bottom: 0;
     padding-top:0;
 }
-
 .subtask-tree li {
     position: relative;
     padding-left: 10px;

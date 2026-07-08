@@ -7,7 +7,6 @@ from dotenv import load_dotenv
 from werkzeug.security import generate_password_hash, check_password_hash
 from ai_models import TaskBreakdown, TaskDecision
 from email_validator import validate_email,EmailNotValidError
-import ast
 import os
 app = Flask(__name__)
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=1)
@@ -219,11 +218,10 @@ def edit_task(task_id):
                 evaluate=decision_maker.evaluate_task(updated_task)
                 task.evaluate=False
                 if evaluate=="yes":
-                    evaluate=True
+                    task.evaluate=True
             db.session.commit()
             flash("Task updated successfully!", "success")
-        except Exception as e:
-            print(f"-------------------{e}")
+        except:
             flash("Something went wrong", "error")
             db.session.rollback()
         return redirect(url_for("dashboard"))
@@ -502,3 +500,4 @@ with app.app_context():
         db.create_all()
 if __name__ == "__main__":
     app.run(debug=True)
+    print("================ Application Started ================")
