@@ -148,7 +148,9 @@ def add_task():
             user_id=session["user_id"]
             evaluate=AIModels.evaluate_task(task)
             if not category:
-                category=None
+                category=AIModels.determinate_category(task)
+                if category=='None':
+                    category=None
             if evaluate=="yes":
                 evaluate=True
             else :
@@ -164,7 +166,7 @@ def add_task():
         except :
             flash(f"Something went wrong", "error")
             db.session.rollback()
-        return redirect(url_for("dashboard"))
+            return redirect(url_for("dashboard"))
     return render_template("add_task.html",title="Add Task",name=name,submit_url=url_for('add_task'))
 
 @app.route('/add_subtask/<task_id>',methods=["POST",'GET'])
@@ -193,7 +195,7 @@ def add_subtask(task_id):
             flash(f"Something went wrong", "error")
             db.session.rollback()
         return redirect(url_for('dashboard'))
-    return render_template("add_task.html",title="Add SubTask",name=name,submit_url=url_for("add_subtask",task_id=task_id))
+    return render_template("add_task.html",title="Add Subtask",name=name,submit_url=url_for("add_subtask",task_id=task_id))
 
 @app.route('/edit/<int:task_id>', methods=['GET','POST'])
 @login_required
@@ -206,7 +208,12 @@ def edit_task(task_id):
             updated_task=request.form["task"]
             task.title=updated_task
             task.priority=request.form['priority']
-            task.category=request.form['category']
+            category=request.form['category']
+            if not category:
+                category =AIModels.determinate_category(updated_task)
+                if category == 'None':
+                    category=None
+            task.category=category
             due_date=request.form['due_date']
             if due_date:
                 from datetime import date
@@ -214,17 +221,17 @@ def edit_task(task_id):
             else:
                 task.due_date = None
             if not task.subtasks:
-                evaluate=decision_maker.evaluate_task(updated_task)
+                evaluate=AIModels.evaluate_task(updated_task)
                 task.evaluate=False
                 if evaluate=="yes":
                     task.evaluate=True
             db.session.commit()
             flash("Task updated successfully!", "success")
-        except:
+        except :
             flash("Something went wrong", "error")
             db.session.rollback()
         return redirect(url_for("dashboard"))
-    return render_template("edit_task.html", title='Edit Task',task=task,name=name,submit_url=url_for('edit_task',task_id=task.id))
+    return render_template("add_task.html", title='Edit Task',task=task,name=name,submit_url=url_for('edit_task',task_id=task.id))
 
 @app.route('/edit_suggestion_task/<task_id>/<_id_>',methods=['POST','GET'])
 @login_required
@@ -250,7 +257,7 @@ def edit_suggestion_task(task_id,_id_):
             flash("Something went wrong", "error")
             db.session.rollback()
         return render_template("ai_suggestions.html",title="suggestions",tasks=tasks,id=_id_,name=name)
-    return render_template("edit_task.html", title='Edit Task',task=task, id=_id_,name=name,submit_url=url_for('edit_suggestion_task',task_id=task.id,_id_=_id_))
+    return render_template("add_task.html", title='Edit Task',task=task, id=_id_,name=name,submit_url=url_for('edit_suggestion_task',task_id=task.id,_id_=_id_))
 
 @app.route('/edit_subtask/<subtask_id>',methods=['POST','GET'])
 @login_required
@@ -275,7 +282,7 @@ def edit_subtask(subtask_id):
             flash("Something went wrong", "error")
             db.session.rollback()
         return redirect(url_for('dashboard'))
-    return render_template("edit_task.html",title='Edit Subtask', task=subtask,name=name,submit_url=url_for('edit_subtask',subtask_id=subtask.id))
+    return render_template("add_task.html",title='Edit Subtask', task=subtask,name=name,submit_url=url_for('edit_subtask',subtask_id=subtask.id))
 
 @app.route('/delete/<int:task_id>', methods=['DELETE'])
 @login_required
@@ -461,12 +468,11 @@ def confirm_break_down(task_id):
             db.session.delete(i)
         Task.query.filter_by(user_id=session["user_id"],id=task_id).first_or_404().evaluate=False
         db.session.commit()
-        flash('Tasks added successfully!','success')
+        flash('SubTasks added successfully!','success')
     except:
             flash("Something went wrong", "error")
             db.session.rollback()
     return redirect(url_for('dashboard'))
-
 
 @app.route('/cancel-break-down')
 @login_required
@@ -496,6 +502,5 @@ with app.app_context():
     else:
         db.create_all()
 if __name__ == "__main__":
-    print("================ Application Started ================")
     app.run(debug=True)
     print("================ Application Stoped ================")

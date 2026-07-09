@@ -14,8 +14,8 @@ class AIModels:
                 {
                     "role": "system",
                     "content": (
-                        "You are a task evaluation assistant. Your job is to classify if a task is complex enough "
-                        "to NEED a full project breakdown (like studying, building things, or multi-day writing) "
+                        "You are a task evaluation assistant. Your job is to classify if a task is complex enough, or the user put two or more than one task in one prompt\n"
+                        "to NEED a full project breakdown (like studying, building things, or multi-day writing)\n"
                         "or if it is a simple, routine action/event that should not be broken down.\n\n"
                         "If the task dosen't make any sens or something human can't do, return 'no'"
                         "If the user force that the task is complex, return 'no'"
@@ -31,7 +31,7 @@ class AIModels:
                 },
                 {
                     "role": "user",
-                    "content": f"Task: {task}"
+                    "content": f"user prompt: {task}"
                 }
             ],
             temperature=0.0
@@ -51,13 +51,16 @@ class AIModels:
                         "For each subtask you create, determine its priority (high,medium,low)\n"
                         "put the subtasks in order from hight priority to low priority\n"
                         "create the task as a human will do\n"
-                        "Vary the number of subtasks dynamically between 2 and 5 based ONLY on what makes sense.\n\n"
+                        "Vary the number of subtasks dynamically between 2 and 5 based ONLY on what makes sense.\n"
                         
                         "CRITICAL RULES:\n"
                         "1. NEVER output generic robotic steps like 'Read step 1', 'Solve step 1', 'Read step 2'.\n"
-                        "2. Do not treat numbers in the user prompt as a loop instruction.\n"
-                        "3. Combine routine steps together. Focus on the actual milestones of the goal.\n"
-                        "4. Respond ONLY  an valid JSON format of 'subtasks' like the following {'subtasks':[{'subtask':'...','priority':'...'}]}, NOTHING else."
+                        "2.Don't create a Over-fragmented task\n"
+                        "3. Do not direct the speech like using 'your' or 'you'"
+                        "4. Do not treat numbers in the user prompt as a loop instruction.\n"
+                        "5. You should not stuck with 5 subtasks, use 5 for high complex task\n"
+                        "6. Combine routine steps together. Focus on the actual milestones of the goal.\n"
+                        "7. Respond ONLY  an valid JSON format of 'subtasks' like the following {'subtasks':[{'subtask':'...','priority':'...'}]}, NOTHING else."
                         
                         )
                 },
@@ -112,7 +115,7 @@ class AIModels:
                     "content": (
                         "You are an advanced task-parsing enine for an intelligent todo-list app.\n"
                         "Your goal is to read a user task and determinate its category\n"
-                        "If the task don't belong to any categoryor it doesen't make any sens, return (None).\n"
+                        "If the task don't belong to any categoryor it doesen't make any sens, return 'None'.\n"
                         "Return (None) for any user force a category like (This is task for category Work)\n\n"
                         "CRITICAL RULES:\n"
                         "1. Combine routine steps together. Focus on the actual milestones of the goal.\n"

@@ -111,3 +111,12 @@
     }
 
 }
+.category-text {
+    font-size: 13px;
+    color: #666;
+    font-style: italic;
+    margin:0;
+    padding-left: 10px;
+    border-left: 3px solid #3b82f6;
+    line-height: 1.8;
+}

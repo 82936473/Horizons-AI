@@ -10,40 +10,75 @@
     {% block sidebar %} {{ super() }} {% endblock %}
 
     <main class="content">
-             <h1>{{title}}</h1>
+        <h1>{{ title }}</h1>
+        {% if task %}
+            <form class="add-card" action="{{ submit_url }}" method="POST" id="task-card">
 
-        <form class="add-card" action="{{ submit_url }}" method="POST" id="task-card">
+                <label>Task</label>
 
-            <label>Task</label>
+                <input type="text" name="task" value="{{ task.title }}" required>
+                
+                <label>Category</label>
+                {% if task.category %}
+                    <input type="text" name="category" placeholder="Work, Travel, Health..." value="{{ task.category }}" >
+                {% else %}
+                    <input type="text" name="category" placeholder="Work, Travel, Health...">
+                {% endif %}
+                {% if title != 'Edit Subtask' %}
+                    <p class="category-text">Leave it empty to auto-detect.{{title|lower}}</p>
+                {% endif %}
+                <label>Priority</label>
 
-            <input type="text" name="task" placeholder="Enter your task" required>
+                <select name="priority" id="priority">
 
-            <label>Category</label>
+                    <option value="High" {% if task.priority=="High" %}selected{% endif %}>🔴 High</option>
+                    <option value="Medium" {% if task.priority=="Medium" %}selected{% endif %}>🟠 Medium</option>
+                    <option value="Low" {% if task.priority=="Low" %}selected{% endif %}>🟢 Low</option>
+                </select>
 
-            <input type="text" name="category" placeholder="Work, Travel, Health... (or nothing)" >
+                <label>Due date</label>
 
-            <label>Priority</label>
+                <input type="date" name="due_date" value="{{ task.due_date }}">
 
-            <select name="priority" id="priority">
+                <button type="submit">Save Changes</button>
 
-                <option value="High">🔴 High</option>
-                <option value="Medium">🟠 Medium</option>
-                <option value="Low">🟢 Low</option>
+            </form>
+        {% else %}
+            <form class="add-card" action="{{ submit_url }}" method="POST" id="task-card">
 
-            </select>
+                <label>Task</label>
 
-            <label>Due date</label>
+                <input type="text" name="task" placeholder="Enter your task" required>
 
-            <input type="date" name="due_date">
+                <label>Category</label>
 
-            <button type="submit">Add Task</button>
+                <input type="text" name="category" placeholder="Work, Travel, Health..." >
+                {% if title != 'Add Subtask' %}
+                    <p class="category-text">Leave it empty to auto-detect.</p>
+                {% endif %}
 
-        </form>
+                <label>Priority</label>
+
+                <select name="priority" id="priority">
+
+                    <option value="High">🔴 High</option>
+                    <option value="Medium">🟠 Medium</option>
+                    <option value="Low">🟢 Low</option>
+
+                </select>
+
+                <label>Due date</label>
+
+                <input type="date" name="due_date">
+
+                <button type="submit">Add Task</button>
+
+            </form>
+        {% endif %}
 
     </main>
 
 </div>
-
 <script>
 
 const priority = document.getElementById("priority");
@@ -66,5 +101,5 @@ priority.addEventListener("change", function(){
 });
 
 </script>
-{% block sidebar_script %} {{super()}} {% endblock %}
+
 {% endblock %}

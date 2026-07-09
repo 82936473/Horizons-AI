@@ -165,11 +165,14 @@
     margin-bottom:10px
 }
 
-svg{
+ svg{
     width:24px;
     height:24px;
     flex-shrink: 0;
     fill:currentColor;
+}
+.dropdown svg{
+    margin-right: 12px;
 }
 .flash-container{
     position:fixed;
@@ -262,7 +265,6 @@ svg{
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    color: #000000;
     transition: transform 0.4s cubic-bezier(0.4,0,0.2,1);
     user-select: none;
     margin-left: auto;
