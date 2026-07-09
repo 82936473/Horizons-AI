@@ -169,7 +169,7 @@ def add_task():
         return redirect(url_for("dashboard"))
     return render_template("add_task.html",title="Add Task",name=name,submit_url=url_for('add_task'))
 
-
+#!#! need flash and finishing
 @app.route('/quick_add/<prompt>')
 @login_required
 def quickadd(prompt):
@@ -180,7 +180,7 @@ def quickadd(prompt):
             priority=task['priority']
             category=task['category']
             due_date=task['due_date']
-            evaluate=AIModels.evaluate_task(task)
+            user_id=session['user_id']
             if title=='None':
                 return ''
             if category=='None':
@@ -189,11 +189,17 @@ def quickadd(prompt):
                 due_date=None
             else:
                 due_date=date.fromisoformat(due_date)
-            if evaluate=='yes':
-                evaluate=True
-            else:
-                evaluate=False
-            new_task=Task(title=title, priority=priority, due_date=due_date, category=category, evaluate=evaluate)
+            new_task=Task(user_id=user_id,title=title, priority=priority, due_date=due_date, category=category)
+            for subtask in task.get("subtasks", []):
+                subtask_title=subtask['subtask']
+                subtask_priority=subtask['priority']
+                subtask_due_date=subtask['due_date']
+                if subtask_due_date=='None':
+                    subtask_due_date=None
+                else:
+                    subtask_due_date=date.fromisoformat(subtask_due_date)
+                new_subtask=SubTask(user_id=user_id,title=subtask_title,priority=subtask_priority)
+                new_task.subtasks.append(new_subtask)
             db.session.add(new_task)
         db.session.commit()
     except:
@@ -326,7 +332,7 @@ def delete_task(task_id):
         if request.headers.get('HX-Request'):
             if remaining==0:
                 return '<main class="content" id="tasks-container" hx-swap-oob="true"><h2>No active tasks.</h2></main>', 200
-            return f'''<ul class="subtask-tree" id="subtasks-{task_id}" hx-swap-oob="delete"></ul>''',200
+            return f'''<ul class="subtask-tree" id="subtasks-{task_id}" hx-swap-oob="delete"></ul>''',
     except:
         db.session.rollback()
         if request.headers.get('HX-Request'):
