@@ -320,8 +320,11 @@ def delete_completed_task(task_id):
         task = CompletedTask.query.filter_by(id=task_id, user_id=session["user_id"]).first_or_404()
         db.session.delete(task)
         db.session.commit()
+        remaining=CompletedTask.query.filter_by(user_id=session["user_id"]).count()
         if request.headers.get('HX-Request'):
-            return ""
+            if remaining==0:
+                return '<main class="content" id="completed-tasks-container" hx-swap-oob="true"><h2>No completed tasks</h2></main>'
+            return "",200
     except :
         db.session.rollback()
         if request.headers.get('HX-Request'):
@@ -493,5 +496,6 @@ with app.app_context():
     else:
         db.create_all()
 if __name__ == "__main__":
-    app.run(debug=True)
     print("================ Application Started ================")
+    app.run(debug=True)
+    print("================ Application Stoped ================")

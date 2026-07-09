@@ -16,7 +16,7 @@
                 {% endif %}
          {% endwith %}
     </div>
-    <main class="content">
+    <main class="content" id="completed-tasks-container">
         {% if tasks %}
             <div class="toolbar">
                 <h3>Completed Tasks</h3>
@@ -47,7 +47,6 @@
                         </div>
 
                     </div>
-
                 </div>
                 <hr>
                 <div class="task-title">
@@ -62,7 +61,7 @@
 
             {% endfor %}
         {% else %}
-                    <h1 style="text-align: center;">No Completed Tasks</h1> 
+                    <h2 style="text-align: center;">No completed Tasks</h2> 
         {% endif %}  
     </main>
 
@@ -106,6 +105,5 @@ document.addEventListener("click", function () {
 
 });
 </script>
-{% block sidebar_script %} {{super()}} {% endblock sidebar_script %}
 {% block flashscript %} {{ super() }} {% endblock flashscript %}
 {% endblock %}
