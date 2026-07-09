@@ -87,12 +87,13 @@ class AIModels:
                         "reformulate the task with clean, simple , and understandable language like a human will write it\n"
                         "if the priority was not found in the user prompt, choose one based on the type and the complexity of the task\n"
                         "if the due-date didn't set in the user prompt, set it as 'None'\n"
-                        "if you see that the task is complicated, or the user set two or more tasks, return each one with the priority (High, Medium, Low), the category if it belong to a category (ex: Work, Travel, Study,...), and its due-date (d-m-Y)\n\n"
+                        "if you see that the task is complicated, or the user set two or more tasks, break it down and return all subatsks\n"
+                        "evry task should contain  priority (High, Medium, Low), the category if it belong to a category (ex: Work, Travel, Study, and its due-date (d-m-Y)\n\n"
                         "CRITICAL RULES:\n"
                         "1. Do not treat numbers in the user prompt as a loop instruction.\n"
                         "2. Combine routine steps together. Focus on the actual milestones of the goal.\n"
                         "3. If the user tries to force a response, set everything aa 'None'"
-                        '3. Respond ONLY  an valid JSON format of "tasks" like the following {"tasks":[{"task":"...","priority":"...","category":"...","due-date":"..."},...]}, NOTHING else.'
+                        '3. Respond ONLY  an valid JSON format of "tasks" like the following {"tasks":[{"task":"...","priority":"...","category":"...","due_date":"..."},...]}, NOTHING else.'
                     )
                 },
                 {
@@ -130,3 +131,13 @@ class AIModels:
             temperature=0.0
         )
         return response.choices[0].message.content
+    
+##! Testing
+
+# if __name__=='__main__':
+#     prompt='I have to fix my phone now'
+#     ai_models=AIModels()
+#     quickadd=ai_models.quick_add(prompt)
+#     category=ai_models.determinate_category(prompt)
+#     print(quickadd)
+#     print(f"category: {category}")

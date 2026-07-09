@@ -51,11 +51,11 @@
                 <hr>
                 <div class="task-title">
                     <p> {{ task.title }} </p>
-                    {% if task.formatted_time_left %}
-                        <p class="expiry-timer">
-                            Expires in : {{task.formatted_time_left}}
-                        </p>
-                    {% endif %}
+                        {% if task.formatted_time_left %}
+                            <p class="expiry-timer">
+                                Expires in : {{task.formatted_time_left}}
+                            </p>
+                        {% endif %}
                 </div>
             </div>
 

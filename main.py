@@ -166,8 +166,39 @@ def add_task():
         except :
             flash(f"Something went wrong", "error")
             db.session.rollback()
-            return redirect(url_for("dashboard"))
+        return redirect(url_for("dashboard"))
     return render_template("add_task.html",title="Add Task",name=name,submit_url=url_for('add_task'))
+
+
+@app.route('/quick_add/<prompt>')
+@login_required
+def quickadd(prompt):
+    try:
+        tasks=AIModels.quick_add(prompt)
+        for task in tasks:
+            title=task['task']
+            priority=task['priority']
+            category=task['category']
+            due_date=task['due_date']
+            evaluate=AIModels.evaluate_task(task)
+            if title=='None':
+                return ''
+            if category=='None':
+                category=None
+            if due_date=='None':
+                due_date=None
+            else:
+                due_date=date.fromisoformat(due_date)
+            if evaluate=='yes':
+                evaluate=True
+            else:
+                evaluate=False
+            new_task=Task(title=title, priority=priority, due_date=due_date, category=category, evaluate=evaluate)
+            db.session.add(new_task)
+        db.session.commit()
+    except:
+        db.session.rollback()
+
 
 @app.route('/add_subtask/<task_id>',methods=["POST",'GET'])
 @login_required
@@ -277,7 +308,7 @@ def edit_subtask(subtask_id):
             else:
                 subtask.due_date = None
             db.session.commit()
-            flash("Task updated successfully!", "success")
+            flash("Subtask updated successfully!", "success")
         except Exception:
             flash("Something went wrong", "error")
             db.session.rollback()

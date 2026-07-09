@@ -186,7 +186,8 @@
 }
 .task-title{
     display:flex;
-    align-items: center;
+    flex-direction: column;
+    align-items: flex-start;
     flex:1;
     margin:0;
     overflow-wrap: break-word;
@@ -194,16 +195,16 @@
 }
 .expiry-timer{
     font-size: 11px;
-    color: rgba(95, 2, 2, 0.788);
-    background: #edf2f7;
+    color: rgb(255, 0, 0);
+    background: #f86d6d4f;
     padding: 2px 6px;
-    border-radius: 4px;
-    margin:0;
+    border-radius: 3px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     user-select: none;
     margin-left: auto;
+    align-self: flex-end;
     order:2;
-
+    flex-shrink: 0;
 }
