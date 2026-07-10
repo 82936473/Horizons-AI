@@ -49,6 +49,14 @@ def check_strong_password(password):
         
     return True
 
+def insights():
+    week_completed_tasks=CompletedTask.query.filter_by(user_id=session['user_id']).count()
+    total_completed_tasks = User.query.filter_by(id=session["user_id"]).first_or_404().total_completed_tasks + week_completed_tasks
+    average_completion_time = db.session.query(db.func.avg(CompletedTask.time_to_complete)).filter_by(user_id=session['user_id']).scalar()
+    top_category = db.session.query(CompletedTask.category,db.func.count(CompletedTask.id).label("count")).filter_by(user_id=session['user_id']).group_by(CompletedTask.category).order_by(db.desc("count")).first()
+    count_priority_tasks = db.session.query(CompletedTask.priority,db.func.count(CompletedTask.id)).filter_by(user_id=session['user_id']).group_by(CompletedTask.priority).all()
+    return {"Total completed tasks":total_completed_tasks,"Total completed tasks this week":week_completed_tasks,"Average completion time":average_completion_time,"Top category":top_category,"Count tasks by priority":count_priority_tasks}
+
 @app.errorhandler(404)
 def page_not_found(e):
     return render_template('404.html'), 404
@@ -164,7 +172,7 @@ def add_task():
                 due_date=date.fromisoformat(due_date)
             else:
                 due_date=None
-            new_task = Task(title=task,priority=priority,due_date=due_date,user_id=user_id,category=category,evaluate=evaluate)
+            new_task = Task(title=task,priority=priority,due_date=due_date,user_id=user_id,category=category,evaluate=evaluate,created_at=datetime.now(timezone.utc))
             db.session.add(new_task)
             db.session.commit()
             flash("Task added successfully!", "success")
@@ -196,7 +204,7 @@ def quickadd():
                 due_date=None
             else:
                 due_date=date.fromisoformat(due_date)
-            new_task=Task(user_id=user_id,title=title, priority=priority, due_date=due_date, category=category)
+            new_task=Task(user_id=user_id,title=title, priority=priority, due_date=due_date, category=category,created_tasks=datetime.now(timezone.utc))
             for subtask in task.get("subtasks", []):
                 subtask_title=subtask['subtask']
                 subtask_priority=subtask['priority']
@@ -466,9 +474,7 @@ def delete_all_completed_tasks():
 def complete_task(task_id):
     try:
         task=Task.query.filter_by(id=task_id,user_id=session["user_id"]).first_or_404()
-        title = task.title
-        due_date = task.due_date
-        completed_task = CompletedTask(title=title,due_date=due_date,user_id=session["user_id"],completed_at=datetime.now(timezone.utc))
+        completed_task = CompletedTask(title=task.title,user_id=session["user_id"],completed_at=datetime.now(timezone.utc),priority=task.priority,category=task.category,time_to_complete=(task.completed).total_seconds(datetime.now(timezone.utc)-task.created_at).total_seconds()/3600)
         db.session.add(completed_task)
         db.session.delete(task)
         db.session.commit()
@@ -566,6 +572,7 @@ def cancel_break_down():
     except:
         flash("Something went wrong", "error")
     return redirect(url_for('dashboard'))
+
 
 
 @app.route("/logout")

@@ -5,6 +5,7 @@ class User(db.Model):
     username = db.Column(db.String(100),unique=True,nullable=False)
     name = db.Column(db.String(100),unique=False,nullable=False)
     password = db.Column(db.String(200),nullable=False)
+    total_completed_tasks = db.Column(db.Integer)
     tasks = db.relationship("Task", backref="user", lazy=True)
 class Task(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -25,6 +26,7 @@ class Task(db.Model):
         return self.due_date.strftime("%d-%m-%Y")
     evaluate = db.Column(db.Boolean, default=False, nullable=False)
     subtasks = db.relationship('SubTask', backref='parent_task', lazy=True, cascade="all, delete-orphan")
+    created_at = db.Column(db.DateTime, nullable=True)
 class SubTask(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer,db.ForeignKey("user.id"),nullable=False)
@@ -53,7 +55,9 @@ class AISuggestions(db.Model):
 class CompletedTask(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(300),nullable=False)
-    due_date = db.Column(db.Date,nullable=True)
     user_id = db.Column(db.Integer,db.ForeignKey("user.id"),nullable=False)
     completed_at = db.Column(db.DateTime, nullable=True)
+    time_to_complete = db.Column(db.Integer) 
+    priority = db.Column(db.String(10),nullable=False)
+    category = db.Column(db.String(50), nullable=True)
     time_left = db.Column(db.DateTime, nullable=True)
