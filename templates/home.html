@@ -7,7 +7,6 @@
     display:flex;
     justify-content:center;
     align-items:center;
-    font-family:Arial, Helvetica, sans-serif;
     background:#ffffff;
     }
     .main{
@@ -23,7 +22,7 @@
             font-size:20px;
             padding:18px 25px;
             margin:10px;
-            border-radius:12px;
+            border-radius:8px;
             transition:0.2s;
         }
     .hero-buttons{
@@ -38,7 +37,7 @@
         font-size:18px;
         font-weight:600;
         padding:15px 40px;
-        border-radius:14px;
+        border-radius:8px;
         transition:.2s;
     }
 
@@ -68,7 +67,7 @@
 <div class="containerr">
     <div class="main">
         <h1>Horizons AI</h1>
-        <h2>Organize your tasks intelligently. Let's start</h2>
+        <h2>Organize your tasks intelligently.</h2>
         <div class="hero-buttons">
             <a class="login-btn" href="{{ url_for('log_in') }}";">Log in&emsp;</a>
             <a class="signup-btn" href="{{ url_for('sign_up') }}">Sign up</a>

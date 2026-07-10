@@ -49,6 +49,10 @@ def check_strong_password(password):
         
     return True
 
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('404.html'), 404
+
 @app.route('/')
 @app.route('/home')
 def home():
@@ -146,7 +150,8 @@ def add_task():
             due_date = request.form["due_date"]
             category= request.form["category"]
             user_id=session["user_id"]
-            evaluate=AIModels.evaluate_task(task)
+            # evaluate=AIModels.evaluate_task(task)
+            evaluate=None
             if not category:
                 category=AIModels.determinate_category(task)
                 if category=='None':
@@ -170,11 +175,13 @@ def add_task():
     return render_template("add_task.html",title="Add Task",name=name,submit_url=url_for('add_task'))
 
 #!#! need flash and finishing
-@app.route('/quick_add/<prompt>')
+@app.route('/quick_add',methods=['POST'])
 @login_required
-def quickadd(prompt):
+def quickadd():
+    prompt=request.form.get('quickadd_prompt')
     try:
         tasks=AIModels.quick_add(prompt)
+        created_tasks=[]
         for task in tasks:
             title=task['task']
             priority=task['priority']
@@ -201,9 +208,48 @@ def quickadd(prompt):
                 new_subtask=SubTask(user_id=user_id,title=subtask_title,priority=subtask_priority)
                 new_task.subtasks.append(new_subtask)
             db.session.add(new_task)
+            created_tasks.append(new_task)
         db.session.commit()
+        html_response=''
+        for task in created_tasks:
+            html_response += f"<div class='task-card {task.priority.lower()}' id='task-{task.id}'><div class='card-header'><div>"
+            if task.due_date:
+                html_response+=f"<p><strong>Due date: </strong>{task.friendly_date}</p>"
+            if task.category:
+                html_response+=f"<p><strong>Category: </strong>{task.category}</p>"
+            html_response+=f" <p><strong>Priority: </strong><span>{task.priority}</span></p></div>"
+            html_response+=f'''<div class='dropdown'><button class='menuu'>⋮</button>
+                            <div class='dropdown-content'>
+                            <a href="{ url_for('edit_task', task_id=task.id) }"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z"/></svg><span>Edit</span></a>
+                            <a hx-post="{ url_for('complete_task',task_id=task.id) }" hx-target="#task-{task.id}" hx-swap="delete swap:200ms" class=""><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z"/></svg><span>Complete</span></a>
+                            <a href="{ url_for('add_subtask',task_id=task.id) }"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="m560-120-57-57 144-143H200v-480h80v400h367L503-544l56-57 241 241-240 240Z"/></svg><span>Add Subtask</span></a>
+                            <a hx-delete="{ url_for('delete_task', task_id=task.id) }" hx-target="#task-{task.id}" hx-swap="delete swap:200ms"  hx-confirm="Are you sure you want to delete this task?" class="" ><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24"><path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360Z"/></svg><span>Delete</span></a></div></div></div><hr>
+                '''
+            html_response+=f"<div class='task-title'><p>{task.title}</p>"
+            if task.subtasks:
+                html_response+='<button class="toggle-arrow collapsed" onclick="toggleSubtasks(this)"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M480-528 296-344l-56-56 240-240 240 240-56 56-184-184Z"/></svg></button>'
+            html_response+='</div></div>'
+            html_response+=f'''<ul class="subtask-tree hide-subtasks" id="subtasks-{task.id}">'''
+            for  subtask in task.subtasks:
+                html_response+=f'''<li><div class="task-card {subtask.priority.lower()} id="task-{subtask.id}"><div class="card-header"><div>'''
+                if subtask.due_date:
+                    html_response+=f"<p><strong>Due date:</strong> { subtask.friendly_date }</p>"
+                if subtask.category:
+                    html_response+=f"<p><strong>Category: </strong>{ subtask.category }</p>"
+                html_response+=f"<p><strong>Priority: </strong><span>{ task.priority }</span></p></div>"
+                html_response+=f'''<div class="dropdown"><button class="menuu">⋮</button>
+                <div class="dropdown-content">
+                <a href="{ url_for('edit_subtask', subtask_id=subtask.id) }"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z"/></svg><span>Edit</span></a>
+                <a hx-post="{ url_for('complete_subtask',subtask_id=subtask.id) }" hx-target="#task-{ subtask.id }" hx-swap="delete swap:200ms" class=""><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z"/></svg><span>Complete</span></a>
+                <a hx-delete="{ url_for('delete_subtask', subtask_id=subtask.id) }" hx-target="#task-{ subtask.id }" hx-swap="delete swap:200ms"  hx-confirm="Are you sure you want to delete this subtask?" class=""><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24"><path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360Z"/></svg><span>Delete</span></a>
+                </div></div></div><hr>'''
+                html_response+=f'''<div class="task-title"><p>{ subtask.title }</p></div></div></li>'''
+            html_response+='</ul>'
+        print(html_response)
+        return html_response,200
     except:
         db.session.rollback()
+        return "",404
 
 
 @app.route('/add_subtask/<task_id>',methods=["POST",'GET'])
@@ -332,7 +378,7 @@ def delete_task(task_id):
         if request.headers.get('HX-Request'):
             if remaining==0:
                 return '<main class="content" id="tasks-container" hx-swap-oob="true"><h2>No active tasks.</h2></main>', 200
-            return f'''<ul class="subtask-tree" id="subtasks-{task_id}" hx-swap-oob="delete"></ul>''',
+            return f'''<ul class="subtask-tree" id="subtasks-{task_id}" hx-swap-oob="delete"></ul>''',200
     except:
         db.session.rollback()
         if request.headers.get('HX-Request'):

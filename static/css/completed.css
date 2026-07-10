@@ -22,7 +22,7 @@
     width:90%;
     background-color:#00000033;
     max-width:900px;
-    border-radius:18px;
+    border-radius:8px;
     padding:25px 35px;
     margin-bottom:30px;
     box-sizing:border-box;
@@ -78,14 +78,14 @@
     right:0;
     background:rgba(255, 255, 255, 0.678);
     min-width:150px;
-    border-radius:10px;
+    border-radius:8px;
     box-shadow:0 5px 15px rgba(0,0,0,0.2);
     overflow:hidden;
 }
 
 .dropdown-content a{
     display:flex;
-    border-radius: 12px;
+    border-radius: 8px;
     align-items: center;
     padding:14px 18px;
     text-decoration:none;
@@ -113,7 +113,7 @@
     font-weight:bold;
     background:#e3e3e3;
     padding: 10px 10px;
-    border-radius:18px;
+    border-radius:8px;
     box-shadow:0px 8px 20px rgba(0,0,0,0.15);
 }
 .toolbar h3{
@@ -131,7 +131,7 @@
     color:black;
     bottom:20px;
     right:20px;
-    border-radius:10px;
+    border-radius:8px;
     color:white;
     animation:fadeOut 5s forwards;
     box-shadow:0px 8px 20px rgba(0, 0, 0, 0.308);
@@ -159,11 +159,11 @@
     position:absolute;
     top:10px;
     right:70px;
-    border-radius: 12px;
+    border-radius: 8px;
 }
 .delete-all-tasks a{
     display:flex;
-    border-radius: 12px;
+    border-radius: 8px;
     align-items: center;
     padding:14px 18px;
     text-decoration:none;
@@ -204,6 +204,7 @@
     justify-content: center;
     user-select: none;
     margin-left: auto;
+    margin-bottom: auto;
     align-self: flex-end;
     order:2;
     flex-shrink: 0;

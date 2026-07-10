@@ -88,7 +88,7 @@ class AIModels:
                         "if the priority was not found in the user prompt, choose one based on the type and the complexity of the task\n"
                         "if the due-date didn't set in the user prompt, set it as 'None'\n"
                         "put the subtasks in order from hight priority to low priority\n"
-                        "evry task should contain  priority (High, Medium, Low), the category if it belong to a category (ex: Work, Travel, Study, and the due-date (d-m-Y)\n\n"
+                        "evry task should contain  priority (High, Medium, Low), the category if it belong to a category (ex: Work, Travel, Study, and the due-date (YYYY-MM-DD)\n\n"
                         "CRITICAL RULES:\n"
                         "1. Do not treat numbers in the user prompt as a loop instruction.\n"
                         "2. Try to ignore reciting the same date multiple times for subtasks as possible\n"

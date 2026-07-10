@@ -15,7 +15,11 @@
                 {% endfor %}
             {% endif %}
         {% endwith %}
-     </div>
+    </div>
+    <form class="quickadd" hx-post="{{url_for('quickadd')}}" hx-target="#tasks-container" hx-swap="beforeend settle:200ms" onsubmit="setTimeout(() => this.reset(), 50)">
+        <input class="quickadd_prompt" type="text" name="quickadd_prompt" placeholder="Describe your task here" required>
+        <button type="submit" class="submit_prompt"><span class="btn-text">Send</span></button>
+    </form>
     <main class="content" id="tasks-container">
         {% if tasks %}
         <div class="toolbar">
@@ -38,12 +42,12 @@
 
                             <div>
                                 {% if task.due_date %}
-                                    <p><strong>Due date:</strong> {{ task.friendly_date }}</p>
+                                    <p><strong>Due date: </strong>{{ task.friendly_date }}</p>
                                 {% endif %}
                                 {% if task.category %}
-                                    <p><strong>Category:</strong> {{ task.category }}</p>
+                                    <p><strong>Category: </strong>{{ task.category }}</p>
                                 {% endif %}
-                                <p><strong>Priority:</strong><span> {{ task.priority }}</span></p>
+                                <p><strong>Priority: </strong><span>{{ task.priority }}</span></p>
                             </div>
                             <div class="dropdown">
                                 {% if task.evaluate %}
@@ -63,7 +67,7 @@
                         </div>
                         <hr>
                         <div class="task-title">
-                            <p> {{task.title}} </p>
+                            <p>{{task.title}}</p>
                             {% if task.subtasks %}
                                 <button class="toggle-arrow collapsed" onclick="toggleSubtasks(this)"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M480-528 296-344l-56-56 240-240 240 240-56 56-184-184Z"/></svg></button>
                             {% endif %}
@@ -78,12 +82,12 @@
 
                                             <div>
                                                 {% if subtask.due_date %}
-                                                    <p><strong>Due date:</strong> {{ subtask.friendly_date }}</p>
+                                                    <p><strong>Due date: </strong>{{ subtask.friendly_date }}</p>
                                                 {% endif %}
                                                 {% if subtask.category %}
-                                                    <p><strong>Category:</strong> {{ subtask.category }}</p>
+                                                    <p><strong>Category: </strong>{{ subtask.category }}</p>
                                                 {% endif %}
-                                                <p><strong>Priority:</strong><span> {{ task.priority }}</span></p>
+                                                <p><strong>Priority: </strong><span>{{ task.priority }}</span></p>
                                             </div>
                                             <div class="dropdown">
                                                 <button class="menuu">⋮</button>
@@ -96,7 +100,7 @@
                                         </div>
                                         <hr>
                                         <div class="task-title">
-                                            <p> {{ subtask.title }} </p>
+                                            <p>{{ subtask.title }}</p>
                                         </div>
                                     </div>
                                 </li>
@@ -111,8 +115,34 @@
 </div>
 
 <script>
-const buttons = document.querySelectorAll(".menuu");
+document.addEventListener("click", function (event) {
+    // Check if the clicked element (or its closest parent) is a menu button
+    const button = event.target.closest(".menuu");
+    
+    if (button) {
+        // Prevent the click from bubbling out
+        event.stopPropagation();
+        
+        const menuu = button.nextElementSibling;
+        
+        document.querySelectorAll(".dropdown-content").forEach(m => {
+            if (m !== menuu) {
+                m.style.display = "none";
+            }
+        });
 
+        if (menuu.style.display === "block") {
+            menuu.style.display = "none";
+        } else {
+            menuu.style.display = "block";
+        }
+    } else {
+        // If the user clicks anywhere else on the screen, hide all dropdowns
+        document.querySelectorAll(".dropdown-content").forEach(menuu => {
+            menuu.style.display = "none";
+        });
+    }
+});
 buttons.forEach(button => {
 
     button.addEventListener("click", function (event) {
