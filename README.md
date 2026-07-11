@@ -75,6 +75,7 @@ python main.py
 * multiple languages.
 * Dark mode.
 * More reactif componenets. Done
+* ADD Date and time for tasks instead of Date only.
 
 --------------
 ## Live Demo
@@ -101,10 +102,11 @@ python main.py
 ## What I learned During This Project
 During this project, I learned:
 
-- Flask routing
-- HTML & CSS
-- SQLAlchemy and SQLite
-- User authentication
-- Password hashing
-- Responsive web design
-- Git and GitHub workflow
+- Flask routing.
+- HTML & CSS.
+- SQLAlchemy and SQLite.
+- User authentication.
+- Password hashing.
+- Responsive web design.
+- Git and GitHub workflow.
+- HTMX and background communication.

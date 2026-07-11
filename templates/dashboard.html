@@ -16,8 +16,8 @@
             {% endif %}
         {% endwith %}
     </div>
-    <form class="quickadd" hx-post="{{url_for('quickadd')}}" hx-target="#tasks-container" hx-swap="beforeend settle:200ms" onsubmit="setTimeout(() => this.reset(), 50)">
-        <input class="quickadd_prompt" type="text" name="quickadd_prompt" placeholder="Describe your task here" required>
+    <form class="quickadd" hx-post="{{url_for('quickadd')}}" hx-target="#tasks-container" hx-swap="beforeend settle:200ms" onsubmit="setTimeout(() => {this.reset(); const ta = this.querySelector('.quickadd_prompt'); if(ta) ta.style.height = '36px'; }, 50)">
+        <textarea class="quickadd_prompt" name="quickadd_prompt" placeholder="Describe your task here" rows="1"  required oninput="this.style.height = '36px'; this.style.height = this.scrollHeight + 'px';"></textarea>
         <button type="submit" class="submit_prompt"><span class="btn-text">Send</span></button>
     </form>
     <main class="content" id="tasks-container">
@@ -25,7 +25,7 @@
         <div class="toolbar">
             <h3>Tasks</h3>
             <div class="dropdown">
-                    <button class="menuu sortby"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M120-240v-80h240v80H120Zm0-200v-80h480v80H120Zm0-200v-80h720v80H120Z"/></svg><span>Sort by</span></button>
+                <button class="menuu sortby"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M120-240v-80h240v80H120Zm0-200v-80h480v80H120Zm0-200v-80h720v80H120Z"/></svg><span>Sort by</span></button>
                 <div class="dropdown-content">
                     <a href="{{ url_for('dashboard', sort='priority') }}">Priority</a>
                     <a href="{{ url_for('dashboard', sort='date') }}">Due date</a>
@@ -51,7 +51,7 @@
                             </div>
                             <div class="dropdown">
                                 {% if task.evaluate %}
-                                    <a href="{{url_for('break_down',task=task.title,task_id=task.id)}}" class="break-down">Break down this task</a>
+                                    <a href="{{url_for('break_down',task_id=task.id)}}" class="break-down">Break down this task</a>
                                 {% endif %}
                                 <button class="menuu">⋮</button>
 
@@ -108,7 +108,7 @@
                         </ul>
                     {% endfor %}
         {% else %}
-                <h2 style="text-align: center;">No active tasks.</h2>
+                <h2 class="no-tasks-message" style="text-align: center;">No active tasks.</h2>
         {% endif %} 
     </main>
 

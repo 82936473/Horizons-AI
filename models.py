@@ -1,5 +1,5 @@
 from database import db
-from datetime import date, timedelta
+from datetime import date, timedelta, timezone, datetime
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(100),unique=True,nullable=False)
@@ -26,7 +26,7 @@ class Task(db.Model):
         return self.due_date.strftime("%d-%m-%Y")
     evaluate = db.Column(db.Boolean, default=False, nullable=False)
     subtasks = db.relationship('SubTask', backref='parent_task', lazy=True, cascade="all, delete-orphan")
-    created_at = db.Column(db.DateTime, nullable=True)
+    created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 class SubTask(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer,db.ForeignKey("user.id"),nullable=False)

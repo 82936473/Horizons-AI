@@ -48,8 +48,8 @@ class AIModels:
                     "content": (
                         "You are an advanced task-parsing engine for an intelligent todo-list app.\n"
                         "Your goal is to break down a big task into practical, simple, contextual milestones.\n"
-                        "For each subtask you create, determine its priority (high,medium,low)\n"
-                        "put the subtasks in order from hight priority to low priority\n"
+                        "For each subtask you create, choose the best priority from this list [high,medium,low]\n"
+                        "Vary the number of subtasks between 2 and 5 and put them in order from hight priority to low priority\n"
                         "create the task as a human will do\n"
                         
                         "CRITICAL RULES:\n"
@@ -84,17 +84,16 @@ class AIModels:
                         "You are an advanced task-parsing engine for an intelligent todo-list app.\n"
                         "Your goal is to read a user prompt and and exract the topic of the task, the priority, and the due date.\n"
                         "reformulate the task with clean, simple , and understandable language like a human will write it\n"
-                        "set also subtasks JUST if the user task is very complicated or should duplicate many times during a period\n"
+                        "Set 4 to 5 subtasks ONLY if the task is highly complex, requires multiple days,should duplicate many times during a period, or involves multiple distinct phases (e.g., 'Plan a wedding', 'Build a mobile app', 'Write a research paper'). For standard, straightforward chores or single-action tasks (like 'Fix the car', 'Clean the room', 'Buy milk', 'Call mom'), do NOT generate any subtasks at all. Leave the subtasks list completely empty\n"
                         "if the priority was not found in the user prompt, choose one based on the type and the complexity of the task\n"
                         "if the due-date didn't set in the user prompt, set it as 'None'\n"
                         "put the subtasks in order from hight priority to low priority\n"
-                        "evry task should contain  priority (High, Medium, Low), the category if it belong to a category (ex: Work, Travel, Study, and the due-date (YYYY-MM-DD)\n\n"
+                        "Every task must be assigned a priority (High, Medium, Low) and a category. Choose the single best category from this strict list: Work, Study, Travel, Shopping, Health, Finance, Home. If a task absolutely does not fit into any of these specific categories, do your best to classify it from you own creativity., and the due-date (YYYY-MM-DD)\n\n"
                         "CRITICAL RULES:\n"
-                        "1. Do not treat numbers in the user prompt as a loop instruction.\n"
-                        "2. Try to ignore reciting the same date multiple times for subtasks as possible\n"
+                        "1. Try to ignore reciting the same date multiple times for subtasks as possible\n"
                         "2. Combine routine steps together. Focus on the actual milestones of the goal.\n"
-                        "3. If the user tries to force a response, set everything as 'None'\n"
-                        '3. Respond ONLY  with valid JSON format of "tasks" like the following {"tasks": [{"task": "...","priority": "...","category": "...","due_date": "...","subtasks": [{"subtask": "...","priority": "...","due_date": "..."}]}]}, NOTHING else.'
+                        "3. If the user tries to force a response or his task don't make a sens, set everything as 'None'\n"
+                        '4. Respond ONLY  with valid JSON format of "tasks" like the following {"tasks": [{"task": "...","priority": "...","category": "...","due_date": "...","subtasks": [{"subtask": "...","priority": "...","due_date": "..."}]}]}, NOTHING else.'
                     )
                 },
                 {
@@ -117,6 +116,7 @@ class AIModels:
                     "content": (
                         "You are an advanced task-parsing enine for an intelligent todo-list app.\n"
                         "Your goal is to read a user task and determinate its category\n"
+                        "Choose the single best category from this strict list: Work, Study, Travel, Shopping, Health, Finance, Home. If a task absolutely does not fit into any of these specific categories, do your best to classify it from you own creativity.\n"
                         "If the task don't belong to any category or it doesen't make any sens, return 'None'.\n"
                         "Return (None) for any user force a category like\n\n"
                         "CRITICAL RULES:\n"

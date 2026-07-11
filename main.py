@@ -1,4 +1,4 @@
-from flask import Flask, render_template,request,redirect,url_for,session,flash
+from flask import Flask, render_template,request,redirect,url_for,session,flash,make_response
 from datetime import date,datetime,timezone,timedelta
 from functools import wraps
 from database import db
@@ -21,10 +21,13 @@ with app.app_context():
     db.create_all()
 AIModels=AIModels()
 def login_required(f):
-
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if "user_id" not in session:
+            if request.headers.get("HX-Request"):
+                response=make_response("",200)
+                response.headers["HX-Redirect"] = url_for('log_in')
+                return response
             return redirect(url_for("log_in"))
         return f(*args, **kwargs)
     return decorated_function
@@ -59,7 +62,7 @@ def insights():
 
 @app.errorhandler(404)
 def page_not_found(e):
-    return render_template('404.html'), 404
+    return render_template('404.html',title='404'), 404
 
 @app.route('/')
 @app.route('/home')
@@ -158,8 +161,7 @@ def add_task():
             due_date = request.form["due_date"]
             category= request.form["category"]
             user_id=session["user_id"]
-            # evaluate=AIModels.evaluate_task(task)
-            evaluate=None
+            evaluate=AIModels.evaluate_task(task)
             if not category:
                 category=AIModels.determinate_category(task)
                 if category=='None':
@@ -180,14 +182,15 @@ def add_task():
             flash(f"Something went wrong", "error")
             db.session.rollback()
         return redirect(url_for("dashboard"))
-    return render_template("add_task.html",title="Add Task",name=name,submit_url=url_for('add_task'))
+    return render_template("add_task.html",title="Add Task",name=name,status='add_task',submit_url=url_for('add_task'))
 
 #!#! need flash and finishing
-@app.route('/quick_add',methods=['POST'])
+@app.route('/quickadd',methods=['POST'])
 @login_required
 def quickadd():
-    prompt=request.form.get('quickadd_prompt')
     try:
+        remaining=Task.query.filter_by(user_id=session['user_id']).count()
+        prompt=request.form.get('quickadd_prompt')
         tasks=AIModels.quick_add(prompt)
         created_tasks=[]
         for task in tasks:
@@ -204,7 +207,8 @@ def quickadd():
                 due_date=None
             else:
                 due_date=date.fromisoformat(due_date)
-            new_task=Task(user_id=user_id,title=title, priority=priority, due_date=due_date, category=category,created_tasks=datetime.now(timezone.utc))
+            new_task=Task(user_id=user_id,title=title, priority=priority, due_date=due_date, category=category,created_at=datetime.now(timezone.utc))
+            db.session.add(new_task)
             for subtask in task.get("subtasks", []):
                 subtask_title=subtask['subtask']
                 subtask_priority=subtask['priority']
@@ -213,12 +217,29 @@ def quickadd():
                     subtask_due_date=None
                 else:
                     subtask_due_date=date.fromisoformat(subtask_due_date)
-                new_subtask=SubTask(user_id=user_id,title=subtask_title,priority=subtask_priority)
-                new_task.subtasks.append(new_subtask)
+                new_subtask=SubTask(user_id=user_id,parent_task=new_task,title=subtask_title,priority=subtask_priority,due_date=subtask_due_date)
+                db.session.add(new_subtask)
             db.session.add(new_task)
+            hh_tasks=Task.query.filter_by(user_id=session['user_id']).all()
             created_tasks.append(new_task)
         db.session.commit()
         html_response=''
+        if remaining==0:
+            html_response+=f'''
+            <div class="toolbar">
+                <h3>Tasks</h3>
+                <div class="dropdown">
+                    <button class="menuu sortby"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M120-240v-80h240v80H120Zm0-200v-80h480v80H120Zm0-200v-80h720v80H120Z"/></svg><span>Sort by</span></button>
+                    <div class="dropdown-content">
+                        <a href="{ url_for('dashboard', sort='priority') }">Priority</a>
+                        <a href="{ url_for('dashboard', sort='date') }">Due date</a>
+                        <a href="{ url_for('dashboard', sort='name') }">Alphabetical</a>
+                    </div> 
+                </div>
+            </div>
+            <div class="delete-all-tasks">
+                <a href="{ url_for('delete_all_tasks') }"  onclick="return confirm('Are you sure you want to delete all your tasks?')"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="m376-300 104-104 104 104 56-56-104-104 104-104-56-56-104 104-104-104-56 56 104 104-104 104 56 56Zm-96 180q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520Zm-400 0v520-520Z"/></svg><span>delete all tasks</span></a>
+            </div>'''
         for task in created_tasks:
             html_response += f"<div class='task-card {task.priority.lower()}' id='task-{task.id}'><div class='card-header'><div>"
             if task.due_date:
@@ -244,7 +265,7 @@ def quickadd():
                     html_response+=f"<p><strong>Due date:</strong> { subtask.friendly_date }</p>"
                 if subtask.category:
                     html_response+=f"<p><strong>Category: </strong>{ subtask.category }</p>"
-                html_response+=f"<p><strong>Priority: </strong><span>{ task.priority }</span></p></div>"
+                html_response+=f"<p><strong>Priority: </strong><span>{ subtask.priority }</span></p></div>"
                 html_response+=f'''<div class="dropdown"><button class="menuu">⋮</button>
                 <div class="dropdown-content">
                 <a href="{ url_for('edit_subtask', subtask_id=subtask.id) }"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z"/></svg><span>Edit</span></a>
@@ -253,7 +274,6 @@ def quickadd():
                 </div></div></div><hr>'''
                 html_response+=f'''<div class="task-title"><p>{ subtask.title }</p></div></div></li>'''
             html_response+='</ul>'
-        print(html_response)
         return html_response,200
     except:
         db.session.rollback()
@@ -267,6 +287,7 @@ def add_subtask(task_id):
     name=user.name
     if request.method=="POST":
         try:
+            parent_task=Task.query.filter_by(user_id=session['user_id'],id=task_id).first_or_404()
             task = request.form["task"]
             priority = request.form["priority"]
             due_date = request.form["due_date"]
@@ -278,7 +299,7 @@ def add_subtask(task_id):
                 due_date=date.fromisoformat(due_date)
             else:
                 due_date=None
-            new_subtask = SubTask(parent_id=task_id,title=task,priority=priority,category=category,due_date=due_date,user_id=user_id)
+            new_subtask = SubTask(parent_task=parent_task,title=task,priority=priority,category=category,due_date=due_date,user_id=user_id)
             db.session.add(new_subtask)
             db.session.commit()
             flash('SubTask added successfully!','success')
@@ -385,7 +406,7 @@ def delete_task(task_id):
         remaining = Task.query.filter_by(user_id=session["user_id"]).count()
         if request.headers.get('HX-Request'):
             if remaining==0:
-                return '<main class="content" id="tasks-container" hx-swap-oob="true"><h2>No active tasks.</h2></main>', 200
+                return '<main class="content" id="tasks-container" hx-swap-oob="true"><h2 class="no-tasks-message">No active tasks.</h2></main>', 200
             return f'''<ul class="subtask-tree" id="subtasks-{task_id}" hx-swap-oob="delete"></ul>''',200
     except:
         db.session.rollback()
@@ -403,7 +424,7 @@ def delete_suggestion_task(task_id,_id_):
         db.session.delete(task)
         db.session.commit()
         if request.headers.get('HX-Request'):
-            return ""
+            return "",200
     except:
         db.session.rollback()
         if request.headers.get('HX-Request'):
@@ -411,7 +432,7 @@ def delete_suggestion_task(task_id,_id_):
     return render_template("ai_suggestions.html",title="suggestions",tasks=tasks,id=_id_,name=name)
 
 
-@app.route("/delte_completed_task/<int:task_id>",methods=['DELETE'])
+@app.route("/delete_completed_task/<int:task_id>",methods=['DELETE'])
 @login_required
 def delete_completed_task(task_id):
     try:
@@ -437,11 +458,11 @@ def delete_subtask(subtask_id):
         db.session.delete(subtask)
         db.session.commit()
         if request.headers.get('HX-Request'):
-            return ""
+            return "",200
     except Exception:
         db.session.rollback()
         if request.headers.get('HX-Request'):
-            return ""
+            return "",400
         
     return redirect(url_for("dashboard"))
 
@@ -474,19 +495,19 @@ def delete_all_completed_tasks():
 def complete_task(task_id):
     try:
         task=Task.query.filter_by(id=task_id,user_id=session["user_id"]).first_or_404()
-        completed_task = CompletedTask(title=task.title,user_id=session["user_id"],completed_at=datetime.now(timezone.utc),priority=task.priority,category=task.category,time_to_complete=(task.completed).total_seconds(datetime.now(timezone.utc)-task.created_at).total_seconds()/3600)
+        completed_task = CompletedTask(title=task.title,user_id=session["user_id"],completed_at=datetime.now(timezone.utc),priority=task.priority,category=task.category,time_to_complete=(datetime.now(timezone.utc)-task.created_at.replace(tzinfo=timezone.utc)).total_seconds()/3600)
         db.session.add(completed_task)
         db.session.delete(task)
         db.session.commit()
         remaining = Task.query.filter_by(user_id=session["user_id"]).count()
         if request.headers.get("HX-Request"):
             if remaining==0:
-                return '<main class="content" id="tasks-container" hx-swap-oob="true"><h2>No active tasks.</h2></main>', 200
+                return '<main class="content" id="tasks-container" hx-swap-oob="true"><h2 class="no-tasks-message">No active tasks.</h2></main>', 200
             return f'''<ul class="subtask-tree" id="subtasks-{task_id}" hx-swap-oob="delete"></ul>''',200
-    except Exception:
-            db.session.rollback()
-            if request.headers.get("HX-Request"):
-                return "",400
+    except:
+        db.session.rollback()
+        if request.headers.get("HX-Request"):
+            return "",400
     return redirect(url_for("dashboard"))
 
 @app.route('/complete_subtask/<int:subtask_id>',methods=['POST'])
@@ -501,7 +522,7 @@ def complete_subtask(subtask_id):
         db.session.delete(task)
         db.session.commit()
         if request.headers.get("HX-Request"):
-            return ""
+            return "",200
     except:
             db.session.rollback()
             if request.headers.get("HX-Request"):
@@ -529,18 +550,21 @@ def completed_tasks():
     return render_template("completed.html", title="Completed Tasks", tasks=tasks, status="completed_tasks",name=name)
 
 
-@app.route('/break-down/<task>/<task_id>',methods=['GET','POST'])
+@app.route('/break-down/<task_id>',methods=['GET','POST'])
 @login_required
-def break_down(task,task_id):
+def break_down(task_id):
     user = User.query.get(session["user_id"])
     name=user.name
     try:
-        subtasks=AIModels.break_down_task(task)
+        AISuggestions.query.filter_by(user_id=session['user_id']).delete()
+        task=Task.query.filter_by(user_id=session['user_id'],id=task_id).first_or_404()
+        subtasks=AIModels.break_down_task(task.title)
+        breaked_tasks=[]
         for subtask in subtasks:
             new_task = AISuggestions(title=subtask['subtask'],priority=subtask['priority'],due_date=None,user_id=session["user_id"])
             db.session.add(new_task)
+            breaked_tasks.append(new_task)
             db.session.commit()
-        breaked_tasks =AISuggestions.query.filter_by(user_id=session["user_id"]).all()
     except:
         flash('Something went wrong','error')
         db.session.rollback()
@@ -551,11 +575,13 @@ def break_down(task,task_id):
 def confirm_break_down(task_id):
     try:
         suggestions = AISuggestions.query.filter_by(user_id=session["user_id"])
+        parent_task=Task.query.filter_by(user_id=session['user_id'],id=task_id).first_or_404()
         for i in suggestions:
-            new_task = SubTask(parent_id=task_id,title=i.title,priority=i.priority,category=i.category,due_date=i.due_date,user_id=session["user_id"])
-            db.session.add(new_task)
+            new_subtask = SubTask(parent_task=parent_task,title=i.title,priority=i.priority,category=i.category,due_date=i.due_date,user_id=session["user_id"])
+            db.session.add(new_subtask)
             db.session.delete(i)
-        Task.query.filter_by(user_id=session["user_id"],id=task_id).first_or_404().evaluate=False
+        parent_task.evaluate=False
+        suggestions.delete()
         db.session.commit()
         flash('SubTasks added successfully!','success')
     except:
