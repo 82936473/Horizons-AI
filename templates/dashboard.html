@@ -75,8 +75,8 @@
                     </div>
                     <ul class="subtask-tree hide-subtasks" id="subtasks-{{task.id}}">
                             {% for subtask in task.subtasks %}
-                                <li>
-                                    <div class="task-card {{subtask.priority|lower}}" id="task-{{subtask.id}}">
+                                <li id="task-{{subtask.id}}">
+                                    <div class="task-card {{subtask.priority|lower}}">
 
                                         <div class="card-header">
 

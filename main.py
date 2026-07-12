@@ -51,14 +51,21 @@ def check_strong_password(password):
         raise ValueError("Password must contain at least one special character (@, #, $, %, !, *, &).")
         
     return True
-
+#! nedd to make this function active avery week 
 def insights():
-    week_completed_tasks=CompletedTask.query.filter_by(user_id=session['user_id']).count()
-    total_completed_tasks = User.query.filter_by(id=session["user_id"]).first_or_404().total_completed_tasks + week_completed_tasks
-    average_completion_time = db.session.query(db.func.avg(CompletedTask.time_to_complete)).filter_by(user_id=session['user_id']).scalar()
-    top_category = db.session.query(CompletedTask.category,db.func.count(CompletedTask.id).label("count")).filter_by(user_id=session['user_id']).group_by(CompletedTask.category).order_by(db.desc("count")).first()
-    count_priority_tasks = db.session.query(CompletedTask.priority,db.func.count(CompletedTask.id)).filter_by(user_id=session['user_id']).group_by(CompletedTask.priority).all()
-    return {"Total completed tasks":total_completed_tasks,"Total completed tasks this week":week_completed_tasks,"Average completion time":average_completion_time,"Top category":top_category,"Count tasks by priority":count_priority_tasks}
+    try:
+        user = User.query.filter_by(id=session['user_id']).first_or_404()
+        week_completed_tasks = user.weekly_completed_tasks #! return type 'int'
+        total_completed_tasks = user.total_completed_tasks #! return type 'int' 
+        user.weekly_completed_tasks = 0
+        average_completion_time = user.average_completion_time #! return type 'float'
+        categories=user.categories.split(',')
+        top_category = max(categories) #! return type 'str'
+        count_priority_tasks = user.priorities #! return type {'high':num,'medium':num,'low':num}
+        db.session.commit()
+    except:
+        db.session.rollback()
+    return {"Total completed tasks":total_completed_tasks,"Total completed tasks this week":week_completed_tasks,"Average completion time":average_completion_time,"Top category":top_category,"Count completed tasks by priority":count_priority_tasks}
 
 @app.errorhandler(404)
 def page_not_found(e):
@@ -494,10 +501,41 @@ def delete_all_completed_tasks():
 @login_required
 def complete_task(task_id):
     try:
-        task=Task.query.filter_by(id=task_id,user_id=session["user_id"]).first_or_404()
-        completed_task = CompletedTask(title=task.title,user_id=session["user_id"],completed_at=datetime.now(timezone.utc),priority=task.priority,category=task.category,time_to_complete=(datetime.now(timezone.utc)-task.created_at.replace(tzinfo=timezone.utc)).total_seconds()/3600)
+        task = Task.query.filter_by(id=task_id,user_id=session["user_id"]).first_or_404()
+        completed_task = CompletedTask(title=task.title,user_id=session["user_id"],completed_at=datetime.now(timezone.utc))
         db.session.add(completed_task)
         db.session.delete(task)
+        user = User.query.filter_by(id=session['user_id']).first_or_404()
+        #!!
+        time_to_complete=(datetime.now(timezone.utc)-task.created_at.replace(tzinfo=timezone.utc)).total_seconds()/3600
+        if user.weekly_completed_tasks == 0:
+            user.average_completion_time=float(time_to_complete)
+        else:
+            current_total_time = user.average_completion_time*user.weekly_completed_tasks
+            new_time = current_total_time + time_to_complete
+            user.average_completion_time = new_time / (user.weekly_completed_tasks)
+        user.weekly_completed_tasks+= 1
+        user.total_completed_tasks += 1
+        #!!
+        if user.categories:
+            liste = user.categories.split(',')
+            if task.category != None:
+                liste.append(task.category)
+            user.categories = ",".join(liste)
+        else:
+            user.categories = task.category
+        #!!
+        if user.priorities:
+            priorities=user.priorities
+            high=priorities['high']
+            medium=priorities['medium']
+            low=priorities['low']
+            current_priorities={'high':high,'medium':medium,'low':low}
+            current_priorities[task.priority.lower()]+=1
+            user.priorities = dict(current_priorities)
+        else:
+            user.priorities={'high':0,'medium':0,'low':0}
+        #!!
         db.session.commit()
         remaining = Task.query.filter_by(user_id=session["user_id"]).count()
         if request.headers.get("HX-Request"):
@@ -516,8 +554,7 @@ def complete_subtask(subtask_id):
     try:
         task=SubTask.query.filter_by(id=subtask_id,user_id=session["user_id"]).first_or_404()
         title = task.title
-        due_date = task.due_date
-        completed_task = CompletedTask(title=title,due_date=due_date,user_id=session["user_id"],completed_at=datetime.now(timezone.utc))
+        completed_task = CompletedTask(title=title,user_id=session["user_id"],completed_at=datetime.now(timezone.utc))
         db.session.add(completed_task)
         db.session.delete(task)
         db.session.commit()
@@ -538,8 +575,8 @@ def completed_tasks():
         purge_expired_tasks()
         tasks = CompletedTask.query.filter_by(user_id=session["user_id"]).all()
         for i in tasks:
-            expiration_time = i.completed_at + timedelta(hours=12)
-            i.time_left = expiration_time - datetime.utcnow()
+            expiration_time = i.completed_at.replace(tzinfo=timezone.utc) + timedelta(hours=12)
+            i.time_left = expiration_time - datetime.now(timezone.utc)
             total_seconds = int(i.time_left.total_seconds())
             hours = total_seconds // 3600
             minutes = (total_seconds % 3600) // 60
