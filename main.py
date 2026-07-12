@@ -9,7 +9,6 @@ from dotenv import load_dotenv
 from werkzeug.security import generate_password_hash, check_password_hash
 from ai_models import AIModels
 from email_validator import validate_email,EmailNotValidError
-from email.message import EmailMessage
 import os
 app = Flask(__name__)
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=1)
@@ -22,6 +21,7 @@ app.config['MAIL_USERNAME'] = os.environ.get("address_email")
 app.config['MAIL_PASSWORD'] = os.environ.get("password_email")
 app.secret_key = os.environ.get("SECRET_KEY")
 mail=Mail()
+mail.init_app(app)
 tasks=None
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///horizons.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
@@ -72,10 +72,11 @@ def insights(user):
         categories=user.categories.split(',')
         top_category = max(categories) #! return type 'str'
         count_priority_tasks = user.priorities #! return type {'high':num,'medium':num,'low':num}
+        user.priorities = {'high':0,'medium':0,'low':0}
         db.session.commit()
     except:
         db.session.rollback()
-    return {"Total completed tasks":total_completed_tasks,"Total completed tasks this week":week_completed_tasks,"Average completion time in hours":average_completion_time,"Top category":top_category,"Count completed tasks by priority":count_priority_tasks}
+    return {"name":user.name,"Total completed tasks":total_completed_tasks,"Total completed tasks this week":week_completed_tasks,"Average completion time in hours":average_completion_time,"Top category":top_category,"Count completed tasks by priority":count_priority_tasks}
 
 scheduler = APScheduler()
 @scheduler.task('cron', id='weekly_insights_reset', day_of_week='sun', hour=23, minute=59)
@@ -85,14 +86,16 @@ def weekly_static():
         for user in users:
             try:
                 statics=insights(user)
-                ai_models.static_generator_message(statics)
+                email=ai_models.static_generator_message(statics)
+                message = Message(subject='Your Horizons AI weekly summary', sender="ayman.laa09@gmail.com",recipients=[user.username])
+                message.html = email
+                mail.send(message)
             except:
                 db.session.rollback()
 scheduler.init_app(app)
 scheduler.start()
 
 def greating_email(user_email,name):
-    mail.init_app(app)
     greating_email=f'''<p>Hi {name},</p>
     <p>Welcome to <strong>Horizons AI</strong>! Your new personal command center for organizing your tasks and staying productive.<p>
     <p>Your account is officially ready. Here is what you can do <strong>right out of the gate</strong>:<p>

@@ -129,7 +129,7 @@ class AIModels:
                     "content": f"task: {task}."
                 }
             ],
-            temperature=0.3
+            temperature=0.0
         )
         return response.choices[0].message.content
     
@@ -144,14 +144,17 @@ class AIModels:
                         "You are an advanced task-parsing enine for an intelligent todo-list app.\n"
                         "You are given a json format of a user static\n"
                         "Your goal is to create the weekly message to this user containing his static nicely (you can use one to two imojies)\n"
+                        "Use strong or italic texts in the message in the right place\n"
                         "Start you message with somthing like 'Hey ___, I'm your personal AI agent from Horizons AI'\n"
+                        "Try to make a little long with you creaivity\n"
                         "CRITICAL RULES:\n"
                         "1. Combine routine steps together. Focus on the actual milestones of the goal.\n"
                         "2. Don't put the static like your given, reformulate them with you own way\n"
                         "3. Don't miss any static"
                         "4. Ignore putting floats in the message\n"
-                        "5. Make sure the finale return is about two to three phrases, not like a table"
-                        "6. Respond ONLY with string format, NOTHING else."
+                        "5. Make sure the finale return phrases, not a table\n"
+                        "6. Do NOT use Markdown formatting like **text** for bolding. Use html tags for everything"
+                        "7. Respond ONLY an html format without <html>, <head> or <body> tags, NOTHING else."
                     )
                 },
                 {
