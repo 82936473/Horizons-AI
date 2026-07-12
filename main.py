@@ -1,4 +1,5 @@
 from flask import Flask, render_template,request,redirect,url_for,session,flash,make_response
+from flask_mail import Mail, Message
 from flask_apscheduler import APScheduler
 from datetime import date,datetime,timezone,timedelta
 from functools import wraps
@@ -8,11 +9,19 @@ from dotenv import load_dotenv
 from werkzeug.security import generate_password_hash, check_password_hash
 from ai_models import AIModels
 from email_validator import validate_email,EmailNotValidError
+from email.message import EmailMessage
 import os
 app = Flask(__name__)
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=1)
 load_dotenv()
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USE_SSL'] = False
+app.config['MAIL_USERNAME'] = os.environ.get("address_email")
+app.config['MAIL_PASSWORD'] = os.environ.get("password_email")
 app.secret_key = os.environ.get("SECRET_KEY")
+mail=Mail()
 tasks=None
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///horizons.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
@@ -82,6 +91,24 @@ def weekly_static():
 scheduler.init_app(app)
 scheduler.start()
 
+def greating_email(user_email,name):
+    mail.init_app(app)
+    greating_email=f'''<p>Hi {name},</p>
+    <p>Welcome to <strong>Horizons AI</strong>! Your new personal command center for organizing your tasks and staying productive.<p>
+    <p>Your account is officially ready. Here is what you can do <strong>right out of the gate</strong>:<p>
+    <ul>
+        <li><strong>Organize Your Tasks: Add your tasks, tag their priority levels, and categorize them to keep your workflow clean.</strong></li>
+        <li><strong>Track Your Progress: Every task you check off feeds into your dashboard metrics.</strong></li>
+        <li><strong>Unlock Weekly Insights: Our background system calculates your stats every single week, showing you your average completion times and top categories.</strong></li>
+        <li><strong>Enjoy you journey powered by AI.</strong></li>
+    </ul>
+    <p>The board is clear and ready for your first task. <a href="https://your-app-url.com" style="color: #007bff; font-weight: bold; text-decoration: underline;">Log in and start shipping!</a></p>
+    <p>Happy organizing,<br>
+    <strong>The Horizons AI Team.</strong></p>
+    '''
+    message = Message(subject='WELCOME TO HORIZONS AI!',sender='ayman.laa09@gmail.com',recipients=[user_email])
+    message.html = greating_email
+    mail.send(message)
 
 
 @app.errorhandler(404)
@@ -129,6 +156,7 @@ def user_name():
         name=request.form.get("name")
         user = User.query.filter_by(id=session["user_id"]).first_or_404()
         user.name=name
+        greating_email(user.username,name)
         db.session.commit()
         return redirect(url_for('dashboard'))
     return render_template("user's_name.html")
