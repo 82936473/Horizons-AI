@@ -121,7 +121,7 @@ class AIModels:
                         "Return (None) for any user force a category like\n\n"
                         "CRITICAL RULES:\n"
                         "1. Combine routine steps together. Focus on the actual milestones of the goal.\n"
-                        "2. Respond ONLY with one string word like, NOTHING else."
+                        "2. Respond ONLY with one string words, NOTHING else."
                     )
                 },
                 {
@@ -133,3 +133,36 @@ class AIModels:
         )
         return response.choices[0].message.content
     
+
+    def static_generator_message(self,statics):
+        response = self.client.chat.completions.create(
+            model="openai/gpt-oss-120b",
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "You are an advanced task-parsing enine for an intelligent todo-list app.\n"
+                        "You are given a json format of a user static\n"
+                        "Your goal is to create the weekly message to this user containing his static nicely (you can use one to two imojies)\n"
+                        "Start you message with somthing like 'Hey ___, I'm your personal AI agent from Horizons AI'\n"
+                        "CRITICAL RULES:\n"
+                        "1. Combine routine steps together. Focus on the actual milestones of the goal.\n"
+                        "2. Don't put the static like your given, reformulate them with you own way\n"
+                        "3. Don't miss any static"
+                        "4. Ignore putting floats in the message\n"
+                        "5. Make sure the finale return is about two to three phrases, not like a table"
+                        "6. Respond ONLY with string format, NOTHING else."
+                    )
+                },
+                {
+                    "role":"user",
+                    "content": f"task: {statics}."
+                }
+            ],
+            temperature=2
+        )
+        return response.choices[0].message.content
+
+if __name__=='__main__':
+    ai_model=AIModels()
+    print(ai_model.static_generator_message( {"user name":'Ayman',"Total completed tasks":10,"Total completed tasks this week":3,"Average completion time in hours":0.0342452,"Top category":'Work',"Count completed tasks by priority":{'high':2,'medium':1,'low':0}}))

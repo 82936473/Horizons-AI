@@ -1,4 +1,5 @@
 from flask import Flask, render_template,request,redirect,url_for,session,flash,make_response
+from flask_apscheduler import APScheduler
 from datetime import date,datetime,timezone,timedelta
 from functools import wraps
 from database import db
@@ -19,7 +20,7 @@ db.init_app(app)
 from models import CompletedTask, User, Task, AISuggestions, SubTask
 with app.app_context():
     db.create_all()
-AIModels=AIModels()
+ai_models=AIModels()
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -52,9 +53,9 @@ def check_strong_password(password):
         
     return True
 #! nedd to make this function active avery week 
-def insights():
+def insights(user):
     try:
-        user = User.query.filter_by(id=session['user_id']).first_or_404()
+        # user = User.query.filter_by(id=session['user_id']).first_or_404()
         week_completed_tasks = user.weekly_completed_tasks #! return type 'int'
         total_completed_tasks = user.total_completed_tasks #! return type 'int' 
         user.weekly_completed_tasks = 0
@@ -65,7 +66,23 @@ def insights():
         db.session.commit()
     except:
         db.session.rollback()
-    return {"Total completed tasks":total_completed_tasks,"Total completed tasks this week":week_completed_tasks,"Average completion time":average_completion_time,"Top category":top_category,"Count completed tasks by priority":count_priority_tasks}
+    return {"Total completed tasks":total_completed_tasks,"Total completed tasks this week":week_completed_tasks,"Average completion time in hours":average_completion_time,"Top category":top_category,"Count completed tasks by priority":count_priority_tasks}
+
+scheduler = APScheduler()
+@scheduler.task('cron', id='weekly_insights_reset', day_of_week='sun', hour=23, minute=59)
+def weekly_static():
+    with app.app_context():
+        users=User.query.all()
+        for user in users:
+            try:
+                statics=insights(user)
+                ai_models.static_generator_message(statics)
+            except:
+                db.session.rollback()
+scheduler.init_app(app)
+scheduler.start()
+
+
 
 @app.errorhandler(404)
 def page_not_found(e):
@@ -168,9 +185,9 @@ def add_task():
             due_date = request.form["due_date"]
             category= request.form["category"]
             user_id=session["user_id"]
-            evaluate=AIModels.evaluate_task(task)
+            evaluate=ai_models.evaluate_task(task)
             if not category:
-                category=AIModels.determinate_category(task)
+                category=ai_models.determinate_category(task)
                 if category=='None':
                     category=None
             if evaluate=="yes":
@@ -198,7 +215,7 @@ def quickadd():
     try:
         remaining=Task.query.filter_by(user_id=session['user_id']).count()
         prompt=request.form.get('quickadd_prompt')
-        tasks=AIModels.quick_add(prompt)
+        tasks=ai_models.quick_add(prompt)
         created_tasks=[]
         for task in tasks:
             title=task['task']
@@ -329,7 +346,7 @@ def edit_task(task_id):
             task.priority=request.form['priority']
             category=request.form['category']
             if not category:
-                category =AIModels.determinate_category(updated_task)
+                category =ai_models.determinate_category(updated_task)
                 if category == 'None':
                     category=None
             task.category=category
@@ -340,7 +357,7 @@ def edit_task(task_id):
             else:
                 task.due_date = None
             if not task.subtasks:
-                evaluate=AIModels.evaluate_task(updated_task)
+                evaluate=ai_models.evaluate_task(updated_task)
                 task.evaluate=False
                 if evaluate=="yes":
                     task.evaluate=True
@@ -595,7 +612,7 @@ def break_down(task_id):
     try:
         AISuggestions.query.filter_by(user_id=session['user_id']).delete()
         task=Task.query.filter_by(user_id=session['user_id'],id=task_id).first_or_404()
-        subtasks=AIModels.break_down_task(task.title)
+        subtasks=ai_models.break_down_task(task.title)
         breaked_tasks=[]
         for subtask in subtasks:
             new_task = AISuggestions(title=subtask['subtask'],priority=subtask['priority'],due_date=None,user_id=session["user_id"])
