@@ -1,74 +1,7 @@
 {% extends "layout.html" %}
 {% block head %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<style>
-    .content{
-        display:flex;
-        min-height:100vh;
-    }
-    .statics{
-        flex:1;
-        display: flex;
-        flex-direction: column;
-        padding:20px
-    }
-    .statics-container{
-        display:flex;
-        flex-wrap: wrap;
-        gap:20px;
-        height: auto;
-        margin-bottom: 30px;
-    }
-    .static-item{
-        flex:1 1 250px;
-        min-width:120px;
-        min-height: 120px;
-        background:hsla(0, 0%, 0%, 0.2);
-        border:1px solid #2d2645;
-        border-radius:8px;
-        padding:20px;
-        transition:.2s ease;
-    }
-    .static-item:hover, .chart-container:hover{
-        transform:translateY(-2px);
-    }
-    .stat-title{
-        display:block;
-        color:#8d88a7;
-        font-size:20px;
-        font-weight:600;
-        margin-bottom:5px;
-        text-transform:uppercase;
-    }
-    .static-item h2{
-    margin:0;
-    color:white;
-    font-size:20px;
-    font-weight:700;
-    }
-    .charts-container{
-        display:flex;
-        flex-wrap: wrap;
-        flex-grow: 1;
-        padding: 10px;
-        gap: 20px;
-    }
-    .chart-container{
-        background-color: hsla(0, 0%, 0%, 0.2);
-        border-radius: 8px;
-        border:1px solid #2d2645;
-        width : 405px;
-        height: 400px;
-        padding:20px;
-        transition:.2s ease;
-
-    }
-    #categoryPieChart{
-    max-width:500px;
-    max-height:500px;
-    margin:auto;
-    }
-</style>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/statics.css') }}">
 {% endblock head %}
 {% block content %}
 <div class="content">
@@ -87,53 +20,42 @@
                 <span class="stat-title">Average completion time</span>
                 <h2>{{ statics['Average completion time in hours'] }}</h2>
             </div>
-            <div class="static-item">
-                <span class="stat-title">Top category</span>
-                <h2>{{ statics['Top category'] }}</h2>
-            </div>
-            <div class="static-item">
-                <span class="stat-title">Top Priority</span>
-                <h2>{{ statics['Top priority'] | upper }}</h2>
-            </div>
+            <!-- {% if statics['top category'] %} -->
+                <div class="static-item">
+                    <span class="stat-title">Top category</span>
+                    <h2>{{ statics['top category'] | upper() }}</h2>
+                </div>
+            <!-- {% endif %} -->
+            {% if statics['top priority'] %}
+                <div class="static-item">
+                    <span class="stat-title">Top Priority</span>
+                    <h2>{{ statics['top priority'] | upper() }}</h2>
+                </div>
+            {% endif %}
         </div>
         <div class="charts-container">
-            <div class="chart-container">
-                <h2 style="text-align: center;">Your Time Distribution</h2>
-                <canvas id="categoryPieChart"></canvas>
-            </div>
-            <div class="chart-container">
-                <h2 style="text-align: center;">Your Time Distribution</h2>
-                <canvas id="categoryPieChart"></canvas>
-            </div>
-            <div class="chart-container">
-                <h2 style="text-align: center;">Your Time Distribution</h2>
-                <canvas id="categoryPieChart"></canvas>
-            </div>
+            {% for chart in charts %}
+                <div class="chart-container">
+                    <h2 style="text-align: center;">{{chart.title}}</h2>
+                    <canvas id="{{ chart.id }}"></canvas>
+                </div>
+            {% endfor %}
         </div>
     </div>
 </div>
 
 <script>
-        // Safely pull the arrays from Flask JSON variables
-        const chartLabels = {{ labels | safe }};
-        const chartValues = {{ values | safe }};
+    function createDoughnutChart(canvasId, labels, values, title) {
+        const ctx = document.getElementById(canvasId).getContext('2d');
 
-        // Initialize Chart.js
-        const ctx = document.getElementById('categoryPieChart').getContext('2d');
-        const myChart = new Chart(ctx, {
-            type: 'doughnut', // You can also change this to 'doughnut' for a hollow center!
+        return new Chart(ctx, {
+            type: 'doughnut',
             data: {
-                labels: chartLabels,
+                labels: labels,
                 datasets: [{
-                    label: 'Tasks Completed',
-                    data: chartValues,
-                    backgroundColor: [
-                        '#ff4a5a', // Horizons AI Rose Red
-                        '#36a2eb', // Sky Blue
-                        '#ffcd56', // Yellow
-                        '#4bc0c0', // Teal
-                        '#9966ff'  // Purple
-                    ],
+                    label: title,
+                    data: values,
+                    backgroundColor: ['#ff4a5a','#36a2eb','#ffcd56','#4bc0c0','#9966ff','#22c55e','#f97316'],
                     borderWidth: 1
                 }]
             },
@@ -141,10 +63,13 @@
                 responsive: true,
                 plugins: {
                     legend: {
-                        position: 'bottom',
+                        position: 'bottom'
                     }
                 }
             }
         });
-    </script>
+    }
+    const charts = {{ charts | tojson }};
+    charts.forEach(chart => {createDoughnutChart(chart.id,chart.labels,chart.values,'Completed tasks');});
+</script>
 {% endblock content %}

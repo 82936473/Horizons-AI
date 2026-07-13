@@ -70,7 +70,7 @@ def insights(user):
         total_completed_tasks = user.total_completed_tasks #! return type 'int' 
         average_completion_time = user.average_completion_time #! return type 'float' or 'str'
         if average_completion_time < 0.01666667: #! less than one minute
-             average_completion_time = "in record time!, blazing fast!"
+             average_completion_time = "In record time!"
         categories=user.categories.split(',')
         top_category = max(categories) #! return type 'str'
         count_priority_tasks = user.priorities #! return type {'high':num,'medium':num,'low':num}
@@ -78,7 +78,7 @@ def insights(user):
         db.session.commit()
     except:
         db.session.rollback()
-    return {"name":user.name,"Total completed tasks":total_completed_tasks,"Total completed tasks this week":week_completed_tasks,"Average completion time in hours":average_completion_time,"Top category":top_category,"Count completed tasks by priority":count_priority_tasks,'top priority':top_priority}
+    return {"name":user.name,"Total completed tasks":total_completed_tasks,"Total completed tasks this week":week_completed_tasks,"Average completion time in hours":average_completion_time,"top category":top_category,"Count completed tasks by priority":count_priority_tasks,'top priority':top_priority}
 
 scheduler = APScheduler()
 @scheduler.task('cron', id='weekly_insights_reset', day_of_week='sun', hour=23, minute=59)
@@ -699,11 +699,24 @@ def cancel_break_down():
 @login_required
 def statics():
     user=User.query.filter_by(id=session['user_id']).first_or_404()
-    results = db.session.query(CompletedTask.category, db.func.count(CompletedTask.id)).group_by(CompletedTask.category).all()
     statics=insights(user)
-    labels = [r[0] for r in results] if results else ["No Data"]
-    values = [r[1] for r in results] if results else [0]
-    return render_template('statics.html', labels=json.dumps(labels), values=json.dumps(values), statics=statics)
+    charts=[]
+    category_labels=[]
+    category_values=[]
+    category_results = db.session.query(CompletedTask.category, db.func.count(CompletedTask.id)).group_by(CompletedTask.category).all()
+    if category_results:
+        for r in category_results:
+            if r[0] :
+                category_labels.append(r[0])
+                category_values.append(r[1])
+    else:
+        category_labels=['NoData']
+    charts.append({'id':'categorychart','title':'Categories Distribution','labels':category_labels,'values':category_values})
+    priority_labels=['High','Medium','Low']
+    priority_values=[value for value in statics['Count completed tasks by priority'].values()]
+    charts.append({'id':'prioritychart','title':'Priority Distribution','labels':priority_labels,'values':priority_values})
+    print(f"================={statics},========={charts}")
+    return render_template('statics.html', charts=charts, statics=statics, status='statics')
 @app.route("/logout")
 def logout():
     if "user_id" not in session:

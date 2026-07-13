@@ -93,7 +93,7 @@
     }
 }
 
-.sidebar_dash-dashboard,.sidebar_add-add_task,.sidebar_comp-completed_tasks{
+.sidebar_dash-dashboard,.sidebar_add-add_task,.sidebar_comp-completed_tasks,.sidebar_statics-statics{
     background:#e8f3ff;
     font-weight:bold;
 }
