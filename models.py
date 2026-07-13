@@ -60,5 +60,7 @@ class CompletedTask(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(300),nullable=False)
     user_id = db.Column(db.Integer,db.ForeignKey("user.id"),nullable=False)
+    priority = db.Column(db.String(10),nullable=False)
+    category = db.Column(db.String(50), default=None)
     completed_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     time_left = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))

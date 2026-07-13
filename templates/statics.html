@@ -1,0 +1,150 @@
+{% extends "layout.html" %}
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    .content{
+        display:flex;
+        min-height:100vh;
+    }
+    .statics{
+        flex:1;
+        display: flex;
+        flex-direction: column;
+        padding:20px
+    }
+    .statics-container{
+        display:flex;
+        flex-wrap: wrap;
+        gap:20px;
+        height: auto;
+        margin-bottom: 30px;
+    }
+    .static-item{
+        flex:1 1 250px;
+        min-width:120px;
+        min-height: 120px;
+        background:hsla(0, 0%, 0%, 0.2);
+        border:1px solid #2d2645;
+        border-radius:8px;
+        padding:20px;
+        transition:.2s ease;
+    }
+    .static-item:hover, .chart-container:hover{
+        transform:translateY(-2px);
+    }
+    .stat-title{
+        display:block;
+        color:#8d88a7;
+        font-size:20px;
+        font-weight:600;
+        margin-bottom:5px;
+        text-transform:uppercase;
+    }
+    .static-item h2{
+    margin:0;
+    color:white;
+    font-size:20px;
+    font-weight:700;
+    }
+    .charts-container{
+        display:flex;
+        flex-wrap: wrap;
+        flex-grow: 1;
+        padding: 10px;
+        gap: 20px;
+    }
+    .chart-container{
+        background-color: hsla(0, 0%, 0%, 0.2);
+        border-radius: 8px;
+        border:1px solid #2d2645;
+        width : 405px;
+        height: 400px;
+        padding:20px;
+        transition:.2s ease;
+
+    }
+    #categoryPieChart{
+    max-width:500px;
+    max-height:500px;
+    margin:auto;
+    }
+</style>
+{% endblock head %}
+{% block content %}
+<div class="content">
+    {% block sidebar %} {{ super() }} {% endblock %}
+    <div class="statics">
+        <div class="statics-container">
+            <div class="static-item">
+                <span class="stat-title">Total completed tasks</span>
+                <h2>{{ statics['Total completed tasks'] }}</h2>
+            </div>
+            <div class="static-item">
+                <span class="stat-title">Completed tasks this week</span>
+                <h2>{{ statics['Total completed tasks this week'] }}</h2>
+            </div>
+            <div class="static-item">
+                <span class="stat-title">Average completion time</span>
+                <h2>{{ statics['Average completion time in hours'] }}</h2>
+            </div>
+            <div class="static-item">
+                <span class="stat-title">Top category</span>
+                <h2>{{ statics['Top category'] }}</h2>
+            </div>
+            <div class="static-item">
+                <span class="stat-title">Top Priority</span>
+                <h2>{{ statics['Top priority'] | upper }}</h2>
+            </div>
+        </div>
+        <div class="charts-container">
+            <div class="chart-container">
+                <h2 style="text-align: center;">Your Time Distribution</h2>
+                <canvas id="categoryPieChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <h2 style="text-align: center;">Your Time Distribution</h2>
+                <canvas id="categoryPieChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <h2 style="text-align: center;">Your Time Distribution</h2>
+                <canvas id="categoryPieChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+        // Safely pull the arrays from Flask JSON variables
+        const chartLabels = {{ labels | safe }};
+        const chartValues = {{ values | safe }};
+
+        // Initialize Chart.js
+        const ctx = document.getElementById('categoryPieChart').getContext('2d');
+        const myChart = new Chart(ctx, {
+            type: 'doughnut', // You can also change this to 'doughnut' for a hollow center!
+            data: {
+                labels: chartLabels,
+                datasets: [{
+                    label: 'Tasks Completed',
+                    data: chartValues,
+                    backgroundColor: [
+                        '#ff4a5a', // Horizons AI Rose Red
+                        '#36a2eb', // Sky Blue
+                        '#ffcd56', // Yellow
+                        '#4bc0c0', // Teal
+                        '#9966ff'  // Purple
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                    }
+                }
+            }
+        });
+    </script>
+{% endblock content %}

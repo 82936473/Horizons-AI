@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 from werkzeug.security import generate_password_hash, check_password_hash
 from ai_models import AIModels
 from email_validator import validate_email,EmailNotValidError
+import json
 import os
 app = Flask(__name__)
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=1)
@@ -73,14 +74,11 @@ def insights(user):
         categories=user.categories.split(',')
         top_category = max(categories) #! return type 'str'
         count_priority_tasks = user.priorities #! return type {'high':num,'medium':num,'low':num}
-        user.weekly_completed_tasks = 0
-        user.priorities = {'high':0,'medium':0,'low':0}
-        user.categories = ''
-        user.average_completion_time = 0.0
+        top_priority = max(count_priority_tasks)
         db.session.commit()
     except:
         db.session.rollback()
-    return {"name":user.name,"Total completed tasks":total_completed_tasks,"Total completed tasks this week":week_completed_tasks,"Average completion time in hours":average_completion_time,"Top category":top_category,"Count completed tasks by priority":count_priority_tasks}
+    return {"name":user.name,"Total completed tasks":total_completed_tasks,"Total completed tasks this week":week_completed_tasks,"Average completion time in hours":average_completion_time,"Top category":top_category,"Count completed tasks by priority":count_priority_tasks,'top priority':top_priority}
 
 scheduler = APScheduler()
 @scheduler.task('cron', id='weekly_insights_reset', day_of_week='sun', hour=23, minute=59)
@@ -91,12 +89,17 @@ def weekly_static():
             try:
                 statics=insights(user)
                 ai_email=ai_models.static_generator_message(statics)
-                email= render_template('html_static_table.html', static=statics, ai_output=ai_email)
+                email= render_template('weekly_static_table.html', static=statics, ai_output=ai_email)
                 message = Message(subject='Your Horizons AI weekly summary', sender="ayman.laa09@gmail.com",recipients=[user.username])
                 email=transform(email)
                 message.html = email
                 print(message)
                 mail.send(message)
+                user.weekly_completed_tasks = 0
+                user.priorities = {'high':0,'medium':0,'low':0}
+                user.categories = ''
+                user.average_completion_time = 0.0
+                db.session.commit()
             except:
                 db.session.rollback()
 scheduler.init_app(app)
@@ -558,7 +561,7 @@ def delete_all_completed_tasks():
 def complete_task(task_id):
     try:
         task = Task.query.filter_by(id=task_id,user_id=session["user_id"]).first_or_404()
-        completed_task = CompletedTask(title=task.title,user_id=session["user_id"],completed_at=datetime.now(timezone.utc))
+        completed_task = CompletedTask(title=task.title,user_id=session["user_id"],completed_at=datetime.now(timezone.utc),category=task.category,priority=task.priority)
         db.session.add(completed_task)
         db.session.delete(task)
         user = User.query.filter_by(id=session['user_id']).first_or_404()
@@ -593,7 +596,6 @@ def complete_task(task_id):
             user.priorities={'high':0,'medium':0,'low':0}
         #!!
         db.session.commit()
-        weekly_static()
         remaining = Task.query.filter_by(user_id=session["user_id"]).count()
         if request.headers.get("HX-Request"):
             if remaining==0:
@@ -611,7 +613,7 @@ def complete_subtask(subtask_id):
     try:
         task=SubTask.query.filter_by(id=subtask_id,user_id=session["user_id"]).first_or_404()
         title = task.title
-        completed_task = CompletedTask(title=title,user_id=session["user_id"],completed_at=datetime.now(timezone.utc))
+        completed_task = CompletedTask(title=title,user_id=session["user_id"],completed_at=datetime.now(timezone.utc),category=task.category,priority=task.priority)
         db.session.add(completed_task)
         db.session.delete(task)
         db.session.commit()
@@ -693,8 +695,15 @@ def cancel_break_down():
         flash("Something went wrong", "error")
     return redirect(url_for('dashboard'))
 
-
-
+@app.route('/statics')
+@login_required
+def statics():
+    user=User.query.filter_by(id=session['user_id']).first_or_404()
+    results = db.session.query(CompletedTask.category, db.func.count(CompletedTask.id)).group_by(CompletedTask.category).all()
+    statics=insights(user)
+    labels = [r[0] for r in results] if results else ["No Data"]
+    values = [r[1] for r in results] if results else [0]
+    return render_template('statics.html', labels=json.dumps(labels), values=json.dumps(values), statics=statics)
 @app.route("/logout")
 def logout():
     if "user_id" not in session:
