@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>User Report</title>
+
+<style>
+
+    *{
+        margin:0;
+        padding:0;
+        box-sizing:border-box;
+    }
+
+    body{
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: #f4f7fb;
+        color: #111827;
+        padding:40px;
+    }
+
+    .container{
+        max-width:1000px;
+        margin:auto;
+    }
+
+
+    .badge-container{
+        display:flex;
+        align-items:center;
+        justify-content: center;
+        margin-top:30px;
+    }
+    .badge{
+        background: #2563eb;
+        color:white;
+        text-align:center;
+        text-decoration: none;
+        padding:8px 16px;
+        border-radius:999px;
+        font-size:14px;
+        font-weight:600;
+    }
+
+    .card{
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius:12px;
+        overflow:hidden;
+        margin-bottom:30px;
+    }
+
+    .info-table{
+        width:100%;
+        border-collapse:collapse;
+    }
+
+    .info-table th,
+    .info-table td{
+        padding:20px 24px;
+        border-bottom:1px solid #e5e7eb;
+        font-size:16px;
+    }
+
+    .info-table th{
+        width:50%;
+        text-align:left;
+        font-weight:600;
+        color:#374151;
+        background:#fafafa;
+    }
+
+    .info-table tr:last-child th,
+    .info-table tr:last-child td{
+        border-bottom:none;
+    }
+
+    .value-blue{
+        color: #2563eb;
+        font-weight:700;
+        font-size:22px;
+    }
+
+    .value-green{
+        color: #22c55e;
+        font-weight:700;
+        font-size:22px;
+    }
+
+    .value-orange{
+        color: #ef4444;
+        font-weight:700;
+        font-size:22px;
+    }
+
+    .value-purple{
+        color: #8b5cf6;
+        font-weight:700;
+        font-size:22px;
+    }
+
+    .priority-card{
+        background: #ffffff;
+        border-radius:12px;
+        border: 1px solid #e5e7eb;
+        padding:30px;
+    }
+
+    .priority-title{
+        font-size:28px;
+        margin-bottom:25px;
+        font-weight:700;
+    }
+
+    .priority-grid{
+        display:grid;
+        grid-template-columns:repeat(3,1fr);
+        gap:20px;
+        text-align:center;
+    }
+
+    .priority-item{
+        padding:20px;
+        border-right:1px solid #e5e7eb;
+    }
+
+    .priority-item:last-child{
+        border-right:none;
+    }
+
+    .priority-label{
+        font-size:18px;
+        font-weight:600;
+        margin-bottom:10px;
+    }
+
+    .priority-number{
+        font-size:48px;
+        font-weight:700;
+    }
+
+    .low{
+        color: #22c55e;
+    }
+
+    .medium{
+        color: #f59e0b;
+    }
+
+    .high{
+        color: #ef4444;
+    }
+
+    footer{
+        margin-top:40px;
+        text-align:center;
+        color: #6b7280;
+        font-size:14px;
+    }
+
+    @media(max-width:768px){
+        .priority-grid{
+            grid-template-columns:1fr;
+        }
+
+        .priority-item{
+            border-right:none;
+            border-bottom:1px solid #e5e7eb;
+        }
+
+        .priority-item:last-child{
+            border-bottom:none;
+        }
+    }
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="priority card" style="padding:20px;">
+    {{ ai_output | safe }}
+    </div>
+    <h1 style="margin-bottom: 20px;">Here is you static: </h1>
+
+    <div class="card">
+        <table class="info-table">
+            <tr>
+                <th>Total Completed Tasks</th>
+                <td class="value-blue">{{ static['Total completed tasks'] }}</td>
+            </tr>
+
+            <tr>
+                <th>Completed Tasks This Week</th>
+                <td class="value-green">{{ static['Total completed tasks this week'] }}</td>
+            </tr>
+
+            <tr>
+                <th>Average Completion Time</th>
+                <td class="value-orange">{{ static['Average completion time in hours'] }}</td>
+            </tr>
+
+            <tr>
+                <th>Top Category</th>
+                <td class="value-purple">{{ static['Top category'] }}</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="priority-card">
+        <h2 class="priority-title">Tasks by Priority</h2>
+        <table width="100%" cellpadding="0" cellspacing="0" >
+            <tr>
+                <td align="center" width="33%">
+                    <div style="color:#ef4444;font-weight:bold; font-size: 30px;">
+                        High
+                    </div>
+                    <div style="font-size:48px;color:#ef4444; font-size: 50px;">
+                        {{ static['Count completed tasks by priority']['high'] }}
+                    </div>
+                </td>
+
+                <td align="center" width="33%">
+                    <div style="color:#f59e0b;font-weight:bold; font-size: 30px;">
+                        Medium
+                    </div>
+                    <div style="font-size:48px;color:#f59e0b; font-size: 50px;">
+                        {{ static['Count completed tasks by priority']['medium']}}
+                    </div>
+                </td>
+
+                <td align="center" width="33%">
+                    <div style="color:#22c55e;font-weight:bold; font-size: 30px;">
+                        Low
+                    </div>
+                    <div style="font-size:48px;color:#22c55e; font-size: 50px;">
+                        {{ static['Count completed tasks by priority']['low'] }}
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+       
+    </div>
+    
+</div>
+<div class="badge-container">
+    <a class="badge" href="#"><span>View in dashboard</span></a>
+</div>
+</body>
+</html>

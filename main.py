@@ -1,5 +1,6 @@
 from flask import Flask, render_template,request,redirect,url_for,session,flash,make_response
 from flask_mail import Mail, Message
+from premailer import transform
 from flask_apscheduler import APScheduler
 from datetime import date,datetime,timezone,timedelta
 from functools import wraps
@@ -61,18 +62,21 @@ def check_strong_password(password):
         raise ValueError("Password must contain at least one special character (@, #, $, %, !, *, &).")
         
     return True
-#! nedd to make this function active avery week 
+
 def insights(user):
     try:
-        # user = User.query.filter_by(id=session['user_id']).first_or_404()
         week_completed_tasks = user.weekly_completed_tasks #! return type 'int'
         total_completed_tasks = user.total_completed_tasks #! return type 'int' 
-        user.weekly_completed_tasks = 0
-        average_completion_time = user.average_completion_time #! return type 'float'
+        average_completion_time = user.average_completion_time #! return type 'float' or 'str'
+        if average_completion_time < 0.01666667: #! less than one minute
+             average_completion_time = "in record time!, blazing fast!"
         categories=user.categories.split(',')
         top_category = max(categories) #! return type 'str'
         count_priority_tasks = user.priorities #! return type {'high':num,'medium':num,'low':num}
+        user.weekly_completed_tasks = 0
         user.priorities = {'high':0,'medium':0,'low':0}
+        user.categories = ''
+        user.average_completion_time = 0.0
         db.session.commit()
     except:
         db.session.rollback()
@@ -86,28 +90,32 @@ def weekly_static():
         for user in users:
             try:
                 statics=insights(user)
-                email=ai_models.static_generator_message(statics)
+                ai_email=ai_models.static_generator_message(statics)
+                email= render_template('html_static_table.html', static=statics, ai_output=ai_email)
                 message = Message(subject='Your Horizons AI weekly summary', sender="ayman.laa09@gmail.com",recipients=[user.username])
+                email=transform(email)
                 message.html = email
+                print(message)
                 mail.send(message)
             except:
                 db.session.rollback()
 scheduler.init_app(app)
 scheduler.start()
 
+#!#! change demo url
 def greating_email(user_email,name):
     greating_email=f'''<p>Hi {name},</p>
-    <p>Welcome to <strong>Horizons AI</strong>! Your new personal command center for organizing your tasks and staying productive.<p>
-    <p>Your account is officially ready. Here is what you can do <strong>right out of the gate</strong>:<p>
+    <p>Welcome to <strong>Horizons AI</strong>! 🚀 Your new personal command center for organizing your tasks and staying productive.<p>
+    <p>Your account is officially ready✅. Here is what you can do <strong>right out of the gate</strong>:<p>
     <ul>
-        <li><strong>Organize Your Tasks: Add your tasks, tag their priority levels, and categorize them to keep your workflow clean.</strong></li>
-        <li><strong>Track Your Progress: Every task you check off feeds into your dashboard metrics.</strong></li>
-        <li><strong>Unlock Weekly Insights: Our background system calculates your stats every single week, showing you your average completion times and top categories.</strong></li>
-        <li><strong>Enjoy you journey powered by AI.</strong></li>
+        <li>📝 <strong>Organize Your Tasks: Add your tasks, tag their priority levels, and categorize them to keep your workflow clean.</strong></li>
+        <li>📊 <strong>Track Your Progress: Every task you check off feeds into your dashboard metrics.</strong></li>
+        <li>📈 <strong>Unlock Weekly Insights: Our background system calculates your stats every single week, showing you your average completion times and top categories.</strong></li>
+        <li>🤖 <strong>Enjoy you journey powered by AI.</strong></li>
     </ul>
-    <p>The board is clear and ready for your first task. <a href="https://your-app-url.com" style="color: #007bff; font-weight: bold; text-decoration: underline;">Log in and start shipping!</a></p>
+    <p>👉 The board is clear and ready for your first task.<strong><a href="http://127.0.0.1:5000/dashboard" style="color: #007bff; font-weight: bold; text-decoration: underline;">Log in and start achieving your goals</a></strong></p>
     <p>Happy organizing,<br>
-    <strong>The Horizons AI Team.</strong></p>
+    <strong>The Horizons AI Team.</strong>🌟</p>
     '''
     message = Message(subject='WELCOME TO HORIZONS AI!',sender='ayman.laa09@gmail.com',recipients=[user_email])
     message.html = greating_email
@@ -585,6 +593,7 @@ def complete_task(task_id):
             user.priorities={'high':0,'medium':0,'low':0}
         #!!
         db.session.commit()
+        weekly_static()
         remaining = Task.query.filter_by(user_id=session["user_id"]).count()
         if request.headers.get("HX-Request"):
             if remaining==0:

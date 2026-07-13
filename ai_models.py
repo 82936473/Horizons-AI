@@ -152,14 +152,14 @@ class AIModels:
                         "2. Don't put the static like your given, reformulate them with you own way\n"
                         "3. Don't miss any static"
                         "4. Ignore putting floats in the message\n"
-                        "5. Make sure the finale return phrases, not a table\n"
+                        "5. Make sure the finale return phrases, DO NOT NEVER return rows for each static\n"
                         "6. Do NOT use Markdown formatting like **text** for bolding. Use html tags for everything"
                         "7. Respond ONLY an html format without <html>, <head> or <body> tags, NOTHING else."
                     )
                 },
                 {
                     "role":"user",
-                    "content": f"task: {statics}."
+                    "content": f"Statics: {statics}."
                 }
             ],
             temperature=2

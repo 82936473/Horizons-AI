@@ -71,7 +71,7 @@ python main.py
 * AI task assistant.
 * Task completion. Done
 * Add flash notifications. Done
-* Send Emails.
+* Send Emails. Done
 * multiple languages.
 * Dark mode.
 * More reactif componenets. Done
