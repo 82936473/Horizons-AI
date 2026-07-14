@@ -2,42 +2,78 @@
 {% block head %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <link rel="stylesheet" href="{{ url_for('static', filename='css/statics.css') }}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 {% endblock head %}
 {% block content %}
 <div class="content">
     {% block sidebar %} {{ super() }} {% endblock %}
     <div class="statics">
-        <div class="statics-container">
-            <div class="static-item">
-                <span class="stat-title">Total completed tasks</span>
-                <h2>{{ statics['Total completed tasks'] }}</h2>
-            </div>
-            <div class="static-item">
-                <span class="stat-title">Completed tasks this week</span>
-                <h2>{{ statics['Total completed tasks this week'] }}</h2>
-            </div>
-            <div class="static-item">
-                <span class="stat-title">Average completion time</span>
-                <h2>{{ statics['Average completion time in hours'] }}</h2>
-            </div>
-            <!-- {% if statics['top category'] %} -->
-                <div class="static-item">
-                    <span class="stat-title">Top category</span>
-                    <h2>{{ statics['top category'] | upper() }}</h2>
+        <div class="header">
+            <h1>Statistics Dashboard</h1>
+            <h2>Your productivity insights and activity trends.</h2>
+            <div class="summary-card">
+                <div class="summary-header">
+                    🎯 Summary
                 </div>
-            <!-- {% endif %} -->
-            {% if statics['top priority'] %}
-                <div class="static-item">
-                    <span class="stat-title">Top Priority</span>
-                    <h2>{{ statics['top priority'] | upper() }}</h2>
+
+                <div class="summary-content">
+                    {{ summary | safe() }}
+                </div>
+            </div>
+        </div>
+        <div class="statics-container">
+            <div style=" border-left: 4px solid #3b82f6;" class="static-item">
+                <span class="stat-title"><i class="fas fa-chart-line"></i> Total completed tasks</span>
+                <p class="value">{{ statics['Total completed tasks'] }}</p>
+            </div>
+            <div style="border-left: 4px solid #22c55e;" class="static-item">
+                <span class="stat-title"><i class="fas fa-chart-line"></i> Completed tasks this week</span>
+                <p class="value">{{ statics['Total completed tasks this week'] }}</p>
+                <div class="stat-trend">
+                    {% if statics['weekly change'][0] == 'no change from last week' %}
+                        <p style="color:#22c55e">Stable</p>
+                    {% elif statics['weekly change'][0] == 'no data from last week' %}
+                        <!-- Nothing -->
+                    {% elif statics['weekly change'][1] == 0 %}
+                        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#EA3323"><path d="M480-240 240-480l56-56 144 144v-368h80v368l144-144 56 56-240 240Z"/></svg><p style="color:#ef4444">{{ statics['weekly change'][0] }}</p>
+                    {% elif statics['weekly change'][1] == 1 %}
+                       <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#75FBFD"><path d="M440-240v-368L296-464l-56-56 240-240 240 240-56 56-144-144v368h-80Z"/></svg><p style="color:#22c55e;">{{ statics['weekly change'][0] }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            {% if statics['Average completion time in hours'] %}
+                <div style="border-left: 4px solid #f59e0b;" class="static-item">
+                    <span class="stat-title"><i class="fas fa-clock"></i> Average completion time</span>
+                    <p class="value">{{ statics['Average completion time in hours'] }}</p>
                 </div>
             {% endif %}
+            {% if statics['top category'] %}
+                <div style=" border-left: 4px solid #8b5cf6;" class="static-item">
+                    <span class="stat-title"><i class="fas fa-tag"></i> Top category</span>
+                    <p class="value">{{ statics['top category'] | upper() }}</p>
+                </div>
+            {% endif %}
+            {% if statics['top priority'] %}
+                <div style="border-left: 4px solid #ef4444;" class="static-item">
+                    <span class="stat-title"><i class="fas fa-tag"></i> Top Priority</span>
+                    {% if statics['top priority'] | lower() == 'high' %}
+                        <p class="value" style="color:#ef4444">{{ statics['top priority'] | upper() }}</p>
+                    {% elif statics['top priority'] | lower() == 'medium' %}
+                        <p class="value" style="color:#f59e0b">{{ statics['top priority'] | upper() }}</p>
+                    {% elif statics['top priority'] | lower() == 'low' %}
+                        <p class="value" style="color:#22c55e">{{ statics['top priority'] | upper() }}</p>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+        <div class="header">
+             <h2>Analytics</h2>
         </div>
         <div class="charts-container">
             {% for chart in charts %}
                 <div class="chart-container">
-                    <h2 style="text-align: center;">{{chart.title}}</h2>
-                    <canvas id="{{ chart.id }}"></canvas>
+                    <h3 style="text-align: center">{{chart.title}}</h3>
+                    <canvas class='chart-canvas' id="{{ chart.id }}"></canvas>
                 </div>
             {% endfor %}
         </div>
@@ -45,11 +81,11 @@
 </div>
 
 <script>
-    function createDoughnutChart(canvasId, labels, values, title) {
+    function createDoughnutChart(canvasId, labels, values, type, indexAxis, title) {
         const ctx = document.getElementById(canvasId).getContext('2d');
 
         return new Chart(ctx, {
-            type: 'doughnut',
+            type: type,
             data: {
                 labels: labels,
                 datasets: [{
@@ -60,6 +96,8 @@
                 }]
             },
             options: {
+                indexAxis: indexAxis,
+                maintainAspectRatio: false,
                 responsive: true,
                 plugins: {
                     legend: {
@@ -70,6 +108,6 @@
         });
     }
     const charts = {{ charts | tojson }};
-    charts.forEach(chart => {createDoughnutChart(chart.id,chart.labels,chart.values,'Completed tasks');});
+    charts.forEach(chart => {createDoughnutChart(chart.id,chart.labels,chart.values,chart.type,chart.indexAxis,'Completed tasks');});
 </script>
 {% endblock content %}

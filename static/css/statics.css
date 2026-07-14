@@ -1,65 +1,117 @@
 .content{
-        display:flex;
-        min-height:100vh;
+    display:flex;
+    min-height:100vh;
+    background: #f4f6f8;
+}
+.header{
+    margin-top:10px;
+    margin-bottom:20px;
+    text-align: center;
+}
+.header h2{
+    color:rgb(124, 124, 123)
+}
+.statics{
+    flex:1;
+    display: flex;
+    align-items:center;
+    flex-direction: column;
+    padding-left: clamp(0vw, 6vw, 200px);
+    margin-right: clamp(1px, 6vw, 200px);
     }
-    .statics{
-        flex:1;
-        display: flex;
-        flex-direction: column;
-        padding:20px
-    }
-    .statics-container{
-        display:flex;
-        flex-wrap: wrap;
-        gap:20px;
-        height: auto;
-        margin-bottom: 30px;
-    }
-    .static-item{
-        flex:1 1 250px;
-        min-height: 120px;
-        background:hsla(0, 0%, 0%, 0.2);
-        border:1px solid #2d2645;
-        border-radius:8px;
-        padding:20px;
-        transition:.2s ease;
-    }
-    .static-item:hover, .chart-container:hover{
-        transform:translateY(-2px);
-    }
-    .stat-title{
-        display:block;
-        color:#8d88a7;
-        font-size:20px;
-        font-weight:600;
-        margin-bottom:5px;
-        text-transform:uppercase;
-    }
-    .static-item h2{
-    margin:0;
-    color:white;
-    font-size:20px;
-    font-weight:700;
-    }
-    .charts-container{
-        display:flex;
-        flex-wrap: wrap;
-        flex-grow: 1;
-        padding: 10px;
-        gap: 20px;
-    }
-    .chart-container{
-        background-color: hsla(0, 0%, 0%, 0.2);
-        border-radius: 8px;
-        border:1px solid #2d2645;
-        width : fit-content;
-        height: fit-content;
-        padding:20px;
-        transition:.2s ease;
+.statics-container{
+    font-family: "Poppins", sans-serif;
+    display:flex;
+    flex-wrap: wrap;
+    gap:20px;
+    height: auto;
+    margin-bottom: 30px;
+}
+.summary-card{
+    max-width:900px;
+    margin:0 auto 30px;
+    padding:24px;
+    background: #f3f0ff;
+    border-radius:12px;
+    border:1px solid #e5e7eb;
+    box-shadow:0 4px 12px rgba(0,0,0,.05);
+    line-height: 1.6;
+}
 
-    }
-    #categoryPieChart{
-    max-width:500px;
-    max-height:500px;
-    margin:auto;
-    }
+.summary-header{
+    font-size:18px;
+    font-weight:700;
+    margin-bottom:12px;
+}
+
+.summary-content{
+    color:#4b5563;
+    line-height:1.7;
+}
+.static-item{
+    flex:0 0  250px;
+    height: 60px;
+    overflow: hidden;
+    padding: 16px 20px;
+    border: 1px solid #e2e8f0;
+    background:white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    border-radius:8px;
+    transition: height 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.3s ease, transform 0.3s ease;
+}
+.static-item:hover{
+    height: 154px;
+}
+.static-item:hover, .chart-container:hover{
+    transform:translateY(-4px);
+}
+
+.stat-title{
+    display:block;
+    color:#7e76a7;
+    opacity:.7;
+    font-weight:600;
+    margin-bottom:5px;
+    text-transform:uppercase;
+    font-size:12px;
+    letter-spacing:1px;
+}
+.static-item .value{
+    font-size:30px;
+    margin-top:15px;
+}
+.stat-trend{
+    font-size:16px;
+}
+
+i{
+    color: black;
+}
+.charts-container{
+    display:flex;
+    font-family: "Poppins", sans-serif;
+    flex-wrap: wrap;
+    flex-grow: 1;
+    padding: 10px;
+    gap: 20px;
+}
+
+.chart-container{
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    background:white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    width : fit-content;
+    height: fit-content;
+    transition:.2s ease;
+    padding:24px;
+
+}
+.chart-container h3{
+    font-size:20px;
+    margin-bottom:13px;
+}
+.chart-canvas{
+    max-height: 250px;
+    max-width: 250px; 
+}

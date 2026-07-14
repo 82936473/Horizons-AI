@@ -5,6 +5,7 @@ class User(db.Model):
     username = db.Column(db.String(100),unique=True,nullable=False)
     name = db.Column(db.String(100),unique=False,nullable=False)
     password = db.Column(db.String(200),nullable=False)
+    last_week_completed_tasks = db.Column(db.Integer, default=0)
     weekly_completed_tasks = db.Column(db.Integer, default=0)
     total_completed_tasks = db.Column(db.Integer, default=0)
     average_completion_time = db.Column(db.Float, default=0.0)

@@ -142,7 +142,7 @@ class AIModels:
                     "role": "system",
                     "content": (
                         "You are an advanced task-parsing enine for an intelligent todo-list app.\n"
-                        "You are given a json format of a user static\n"
+                        "You are given a json format of a user statics\n"
                         "Your goal is to create the weekly message to this user containing his static nicely (you can use one to two imojies)\n"
                         "Use strong or italic texts in the message in the right place\n"
                         "Start you message with somthing like 'Hey ___, I'm your personal AI agent from Horizons AI'\n"
@@ -164,6 +164,38 @@ class AIModels:
             ],
             temperature=2
         )
+        return response.choices[0].message.content
+
+    def sammary_generator(self,statics):
+        response = self.client.chat.completions.create(
+            model="openai/gpt-oss-120b",
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "You are generating the content of a dashboard insight card.\n"
+                        "Example: You completed 5 tasks this week. Shopping was your most\n"
+                                "active category, while medium-priority items dominated\n"
+                                "your workload. You're finishing tasks at a record pace 🚀\n\n"
+                        "Rules:\n"
+                        "1. Write 2-4 concise sentences.\n"
+                        "2. Mention the most important insights from the statistics.\n"
+                        "3. Use at most one emoji.\n"
+                        "4. Do not create separators, horizontal lines, ASCII art, boxes, headers, or decorative characters.\n"
+                        "5. Do not use &nbsp;.\n"
+                        "6. Return only the inner HTML content.\n"
+                        "7. Use only <p>, <strong>, and <em> tags when needed.\n"
+                        "8. Keep the tone professional and encouraging.\n"
+                    )
+                },
+                {
+                    "role":"user",
+                    "content": f"Statics: {statics}."
+                }
+            ],
+            temperature=0.0
+        )
+        print(response.choices[0].message.content)
         return response.choices[0].message.content
 
 if __name__=='__main__':

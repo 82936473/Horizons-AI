@@ -66,19 +66,45 @@ def check_strong_password(password):
 
 def insights(user):
     try:
-        week_completed_tasks = user.weekly_completed_tasks #! return type 'int'
-        total_completed_tasks = user.total_completed_tasks #! return type 'int' 
-        average_completion_time = user.average_completion_time #! return type 'float' or 'str'
-        if average_completion_time < 0.01666667: #! less than one minute
+        week_completed_tasks = user.weekly_completed_tasks or 0 #! return type 'int'
+        total_completed_tasks = user.total_completed_tasks or 0 #! return type 'int' 
+        last_week_completed_tasks = user.last_week_completed_tasks or 0
+        weekly_change=['no change from last week',0]
+        if last_week_completed_tasks == 0:
+            if week_completed_tasks > 0:
+                weekly_change[0] =  f"{week_completed_tasks} new tasks completed!"
+                weekly_change[1] = 1
+            else:
+                weekly_change[0] = 'no data from last week'
+        else:
+            change_percent =  ((week_completed_tasks - last_week_completed_tasks) / last_week_completed_tasks) * 100
+        
+            if change_percent > 0:
+                weekly_change[0] =  f"{change_percent:.1f}% from last week"
+                weekly_change[1] = 1
+
+            elif change_percent < 0:
+                weekly_change[0] =  f"{abs(change_percent):.1f}% from last week"
+                weekly_change[1] = 0
+            else:
+                weekly_change[0] = 'no change from last week'
+                weekly_change[1] = 0
+        average_completion_time = user.average_completion_time or 0.0 #! return type 'float' or 'str'
+        if average_completion_time < 0.08333333: #! less than one minute
              average_completion_time = "In record time!"
-        categories=user.categories.split(',')
-        top_category = max(categories) #! return type 'str'
-        count_priority_tasks = user.priorities #! return type {'high':num,'medium':num,'low':num}
-        top_priority = max(count_priority_tasks)
-        db.session.commit()
-    except:
-        db.session.rollback()
-    return {"name":user.name,"Total completed tasks":total_completed_tasks,"Total completed tasks this week":week_completed_tasks,"Average completion time in hours":average_completion_time,"top category":top_category,"Count completed tasks by priority":count_priority_tasks,'top priority':top_priority}
+        else:
+            average_completion_time = f"{average_completion_time:.1f} hours"
+        categories=user.categories.split(',') if user.categories else []
+        if categories:
+            top_category = max(categories, key = categories.count) #! return type 'str' or None
+        else:
+            top_category = None
+        count_priority_tasks = user.priorities or {'high': 0, 'medium': 0, 'low': 0} #! return type {'high':num,'medium':num,'low':num}
+        top_priority = max(count_priority_tasks, key=count_priority_tasks.get)
+    except Exception as e:
+        print(f"Error: {e}")
+        
+    return {"name":user.name,"Total completed tasks":total_completed_tasks,"Total completed tasks this week":week_completed_tasks, 'weekly change': weekly_change,"Average completion time in hours":average_completion_time,"top category":top_category,"Count completed tasks by priority":count_priority_tasks,'top priority':top_priority}
 
 scheduler = APScheduler()
 @scheduler.task('cron', id='weekly_insights_reset', day_of_week='sun', hour=23, minute=59)
@@ -93,8 +119,8 @@ def weekly_static():
                 message = Message(subject='Your Horizons AI weekly summary', sender="ayman.laa09@gmail.com",recipients=[user.username])
                 email=transform(email)
                 message.html = email
-                print(message)
                 mail.send(message)
+                user.last_week_completed_tasks = user.weekly_completed_tasks
                 user.weekly_completed_tasks = 0
                 user.priorities = {'high':0,'medium':0,'low':0}
                 user.categories = ''
@@ -107,22 +133,25 @@ scheduler.start()
 
 #!#! change demo url
 def greating_email(user_email,name):
-    greating_email=f'''<p>Hi {name},</p>
-    <p>Welcome to <strong>Horizons AI</strong>! 🚀 Your new personal command center for organizing your tasks and staying productive.<p>
-    <p>Your account is officially ready✅. Here is what you can do <strong>right out of the gate</strong>:<p>
-    <ul>
-        <li>📝 <strong>Organize Your Tasks: Add your tasks, tag their priority levels, and categorize them to keep your workflow clean.</strong></li>
-        <li>📊 <strong>Track Your Progress: Every task you check off feeds into your dashboard metrics.</strong></li>
-        <li>📈 <strong>Unlock Weekly Insights: Our background system calculates your stats every single week, showing you your average completion times and top categories.</strong></li>
-        <li>🤖 <strong>Enjoy you journey powered by AI.</strong></li>
-    </ul>
-    <p>👉 The board is clear and ready for your first task.<strong><a href="http://127.0.0.1:5000/dashboard" style="color: #007bff; font-weight: bold; text-decoration: underline;">Log in and start achieving your goals</a></strong></p>
-    <p>Happy organizing,<br>
-    <strong>The Horizons AI Team.</strong>🌟</p>
-    '''
-    message = Message(subject='WELCOME TO HORIZONS AI!',sender='ayman.laa09@gmail.com',recipients=[user_email])
-    message.html = greating_email
-    mail.send(message)
+    try:
+        greating_email=f'''<p>Hi {name},</p>
+        <p>Welcome to <strong>Horizons AI</strong>! 🚀 Your new personal command center for organizing your tasks and staying productive.<p>
+        <p>Your account is officially ready✅. Here is what you can do <strong>right out of the gate</strong>:<p>
+        <ul>
+            <li>📝 <strong>Organize Your Tasks: Add your tasks, tag their priority levels, and categorize them to keep your workflow clean.</strong></li>
+            <li>📊 <strong>Track Your Progress: Every task you check off feeds into your dashboard metrics.</strong></li>
+            <li>📈 <strong>Unlock Weekly Insights: Our background system calculates your stats every single week, showing you your average completion times and top categories.</strong></li>
+            <li>🤖 <strong>Enjoy you journey powered by AI.</strong></li>
+        </ul>
+        <p>👉 The board is clear and ready for your first task.<strong><a href="http://127.0.0.1:5000/dashboard" style="color: #007bff; font-weight: bold; text-decoration: underline;">Log in and start achieving your goals</a></strong></p>
+        <p>Happy organizing,<br>
+        <strong>The Horizons AI Team.</strong>🌟</p>
+        '''
+        message = Message(subject='WELCOME TO HORIZONS AI!',sender='ayman.laa09@gmail.com',recipients=[user_email])
+        message.html = greating_email
+        mail.send(message)
+    except Exception as e:
+        print(F"Error: {e}")
 
 
 @app.errorhandler(404)
@@ -170,7 +199,7 @@ def user_name():
         name=request.form.get("name")
         user = User.query.filter_by(id=session["user_id"]).first_or_404()
         user.name=name
-        greating_email(user.username,name)
+        # greating_email(user.username,name) #!#! Make this as comment while offline testing
         db.session.commit()
         return redirect(url_for('dashboard'))
     return render_template("user's_name.html")
@@ -286,7 +315,6 @@ def quickadd():
                 new_subtask=SubTask(user_id=user_id,parent_task=new_task,title=subtask_title,priority=subtask_priority,due_date=subtask_due_date)
                 db.session.add(new_subtask)
             db.session.add(new_task)
-            hh_tasks=Task.query.filter_by(user_id=session['user_id']).all()
             created_tasks.append(new_task)
         db.session.commit()
         html_response=''
@@ -698,25 +726,28 @@ def cancel_break_down():
 @app.route('/statics')
 @login_required
 def statics():
-    user=User.query.filter_by(id=session['user_id']).first_or_404()
-    statics=insights(user)
-    charts=[]
-    category_labels=[]
-    category_values=[]
-    category_results = db.session.query(CompletedTask.category, db.func.count(CompletedTask.id)).group_by(CompletedTask.category).all()
-    if category_results:
-        for r in category_results:
-            if r[0] :
-                category_labels.append(r[0])
-                category_values.append(r[1])
-    else:
-        category_labels=['NoData']
-    charts.append({'id':'categorychart','title':'Categories Distribution','labels':category_labels,'values':category_values})
-    priority_labels=['High','Medium','Low']
-    priority_values=[value for value in statics['Count completed tasks by priority'].values()]
-    charts.append({'id':'prioritychart','title':'Priority Distribution','labels':priority_labels,'values':priority_values})
-    print(f"================={statics},========={charts}")
-    return render_template('statics.html', charts=charts, statics=statics, status='statics')
+    try: 
+        user=User.query.filter_by(id=session['user_id']).first_or_404()
+        statics=insights(user)
+        charts=[]
+        category_labels=[]
+        category_values=[]
+        category_results = db.session.query(CompletedTask.category, db.func.count(CompletedTask.id)).group_by(CompletedTask.category).all()
+        if category_results:
+            for r in category_results:
+                if r[0] :
+                    category_labels.append(r[0])
+                    category_values.append(r[1])
+        else:
+            category_labels=['NoData']
+        charts.append({'id':'categorychart','title':'Categories Distribution','labels':category_labels,'values':category_values,'type':'doughnut','indexAxis':'x'})
+        priority_labels=['High','Medium','Low']
+        priority_values=[value for value in statics['Count completed tasks by priority'].values()]
+        charts.append({'id':'prioritychart','title':'Priority Distribution','labels':priority_labels,'values':priority_values,'type':'bar','indexAxis':'y'})
+        summary = 'test period'
+    except Exception as e:
+        print(f"Error============ {e}")
+    return render_template('statics.html', charts=charts, statics=statics, status='statics', summary=summary)
 @app.route("/logout")
 def logout():
     if "user_id" not in session:
