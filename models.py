@@ -9,8 +9,10 @@ class User(db.Model):
     weekly_completed_tasks = db.Column(db.Integer, default=0)
     total_completed_tasks = db.Column(db.Integer, default=0)
     average_completion_time = db.Column(db.Float, default=0.0)
-    categories = db.Column(db.String(225),default="")
+    categories = db.Column(db.JSON)
     priorities = db.Column(db.JSON)
+    last_login = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    streak = db.Column(db.Integer, default=0)
     tasks = db.relationship("Task", backref="user", lazy=True)
 class Task(db.Model):
     id = db.Column(db.Integer, primary_key=True)

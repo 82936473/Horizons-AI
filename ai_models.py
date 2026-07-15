@@ -195,7 +195,6 @@ class AIModels:
             ],
             temperature=0.0
         )
-        print(response.choices[0].message.content)
         return response.choices[0].message.content
 
 if __name__=='__main__':

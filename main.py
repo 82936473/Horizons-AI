@@ -10,7 +10,6 @@ from dotenv import load_dotenv
 from werkzeug.security import generate_password_hash, check_password_hash
 from ai_models import AIModels
 from email_validator import validate_email,EmailNotValidError
-import json
 import os
 app = Flask(__name__)
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=1)
@@ -43,6 +42,29 @@ def login_required(f):
             return redirect(url_for("log_in"))
         return f(*args, **kwargs)
     return decorated_function
+def update_streak(user):
+    try:
+        now = datetime.now(timezone.utc)
+        today = now.date()
+        if not user.last_login:
+            user.streak = 1
+            user.last_login = now
+            db.session.commit()
+            return
+        else:
+            last_login_date = user.last_login.replace(tzinfo=timezone.utc).date()
+            difference = (today-last_login_date).days
+            if difference==0:
+                pass
+            elif difference==1:
+                user.streak+=1
+                user.last_login = now
+            else:
+                user.streak = 1
+                user.last_login = now
+        db.session.commit()
+    except:
+        db.session.rollback()
 
 def purge_expired_tasks():
     expired_time=datetime.now(timezone.utc) - timedelta(hours=12)
@@ -90,13 +112,21 @@ def insights(user):
                 weekly_change[0] = 'no change from last week'
                 weekly_change[1] = 0
         average_completion_time = user.average_completion_time or 0.0 #! return type 'float' or 'str'
-        if average_completion_time < 0.08333333: #! less than one minute
-             average_completion_time = "In record time!"
+        total_minutes = round(average_completion_time*60)
+        if total_minutes<1:
+            average_completion_time = 'In record time!'
+        elif total_minutes<60:
+            average_completion_time = f"{total_minutes} mins"
         else:
-            average_completion_time = f"{average_completion_time:.1f} hours"
-        categories=user.categories.split(',') if user.categories else []
+            hours = total_minutes // 60
+            minutes = total_minutes % 60
+            if minutes == 0:
+                average_completion_time = f"{hours}h"
+            else:
+                average_completion_time = f"{hours}h {minutes}m"
+        categories=user.categories if user.categories else {}
         if categories:
-            top_category = max(categories, key = categories.count) #! return type 'str' or None
+            top_category = max(categories, key = categories.get) #! return type 'str' or None
         else:
             top_category = None
         count_priority_tasks = user.priorities or {'high': 0, 'medium': 0, 'low': 0} #! return type {'high':num,'medium':num,'low':num}
@@ -200,6 +230,7 @@ def user_name():
         user = User.query.filter_by(id=session["user_id"]).first_or_404()
         user.name=name
         # greating_email(user.username,name) #!#! Make this as comment while offline testing
+        user.streak = 1
         db.session.commit()
         return redirect(url_for('dashboard'))
     return render_template("user's_name.html")
@@ -231,6 +262,7 @@ def log_in():
 def dashboard():
     sort = request.args.get("sort", "date")
     user = User.query.filter_by(id=session["user_id"]).first()
+    update_streak(user)
     if user is None:
         session.clear()
         return redirect(url_for("log_in"))
@@ -247,10 +279,10 @@ def dashboard():
 @app.route("/add", methods=["GET", "POST"])
 @login_required
 def add_task():
-    user = User.query.get(session["user_id"])
-    name=user.name
     if request.method == "POST":
         try:
+            user = User.query.get(session["user_id"])
+            name=user.name
             task = request.form["task"]
             priority = request.form["priority"]
             due_date = request.form["due_date"]
@@ -335,38 +367,81 @@ def quickadd():
                 <a href="{ url_for('delete_all_tasks') }"  onclick="return confirm('Are you sure you want to delete all your tasks?')"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="m376-300 104-104 104 104 56-56-104-104 104-104-56-56-104 104-104-104-56 56 104 104-104 104 56 56Zm-96 180q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520Zm-400 0v520-520Z"/></svg><span>delete all tasks</span></a>
             </div>'''
         for task in created_tasks:
-            html_response += f"<div class='task-card {task.priority.lower()}' id='task-{task.id}'><div class='card-header'><div>"
-            if task.due_date:
-                html_response+=f"<p><strong>Due date: </strong>{task.friendly_date}</p>"
-            if task.category:
-                html_response+=f"<p><strong>Category: </strong>{task.category}</p>"
-            html_response+=f" <p><strong>Priority: </strong><span>{task.priority}</span></p></div>"
-            html_response+=f'''<div class='dropdown'><button class='menuu'>⋮</button>
+            html_response += f"<div class='task-card {task.priority.lower()}' id='task-{task.id}'><div class='card-header'>"
+            html_response+=f"<p>{task.title}</p>"
+            html_response+="<div class='dropdown'>"
+            if task.evaluate:
+                html_response+=f'''<a href="{url_for('break_down',task_id=task.id)}" class="break-down">Break down this task</a>'''
+            html_response+=f'''<button class='menuu'>⋮</button>
                             <div class='dropdown-content'>
                             <a href="{ url_for('edit_task', task_id=task.id) }"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z"/></svg><span>Edit</span></a>
                             <a hx-post="{ url_for('complete_task',task_id=task.id) }" hx-target="#task-{task.id}" hx-swap="delete swap:200ms" class=""><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z"/></svg><span>Complete</span></a>
                             <a href="{ url_for('add_subtask',task_id=task.id) }"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="m560-120-57-57 144-143H200v-480h80v400h367L503-544l56-57 241 241-240 240Z"/></svg><span>Add Subtask</span></a>
                             <a hx-delete="{ url_for('delete_task', task_id=task.id) }" hx-target="#task-{task.id}" hx-swap="delete swap:200ms"  hx-confirm="Are you sure you want to delete this task?" class="" ><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24"><path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360Z"/></svg><span>Delete</span></a></div></div></div><hr>
                 '''
-            html_response+=f"<div class='task-title'><p>{task.title}</p>"
+            html_response += f"<div class='task-title'>"
+            html_response += '<div class="d-flex flex-wrap align-items-center gap-3 mt-2">'
+            if task.due_date:
+                html_response+=f'''<span class="badge bg-light text-secondary border d-inline-flex align-items-center gap-1 py-1.5 px-2.5 rounded-pill" style="font-size: 0.8rem;"><i class="bi bi-calendar-event"></i><strong>Due date: </strong>{ task.friendly_date }</span>
+                                    <span class="text-muted d-none d-sm-inline">•</span>'''
+            if task.category:
+                html_response+=f'''<span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle d-inline-flex align-items-center gap-1 py-1.5 px-2.5 rounded-pill"><i class="bi bi-tag"></i><strong>Category: </strong>{ task.category }</span>
+                                    <span class="text-muted d-none d-sm-inline">•</span>'''
+            if task.priority.lower() == 'high':
+                html_response += f'''<span class="badge bg-danger-subtle text-danger border border-danger-subtle d-inline-flex align-items-center gap-1 py-1.5 px-2.5 rounded-pill" style="font-size: 0.8rem;">
+                                        <span class="rounded-circle bg-danger" style="width: 6px; height: 6px;"></span>
+                                        High Priority
+                                    </span>'''
+            elif task.priority.lower() == 'medium':
+                html_response += f'''<span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle d-inline-flex align-items-center gap-1 py-1.5 px-2.5 rounded-pill" style="font-size: 0.8rem;">
+                                        <span class="rounded-circle bg-warning" style="width: 6px; height: 6px;"></span>
+                                        Medium Priority
+                                    </span>'''
+            else:
+                html_response += f'''<span class="badge bg-success-subtle text-success border border-success-subtle d-inline-flex align-items-center gap-1 py-1.5 px-2.5 rounded-pill" style="font-size: 0.8rem;">
+                                        <span class="rounded-circle bg-success" style="width: 6px; height: 6px;"></span>
+                                        Low Priority
+                                    </span>'''
             if task.subtasks:
                 html_response+='<button class="toggle-arrow collapsed" onclick="toggleSubtasks(this)"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M480-528 296-344l-56-56 240-240 240 240-56 56-184-184Z"/></svg></button>'
-            html_response+='</div></div>'
+            html_response+='</div></div></div>'
             html_response+=f'''<ul class="subtask-tree hide-subtasks" id="subtasks-{task.id}">'''
             for  subtask in task.subtasks:
-                html_response+=f'''<li><div class="task-card {subtask.priority.lower()} id="task-{subtask.id}"><div class="card-header"><div>'''
+                html_response+=f'''<li><div class="task-card {subtask.priority.lower()} id="task-{subtask.id}"><div class="card-header">'''
+                html_response += f"<p>{ subtask.title }</p>"
+                html_response += f'''<div class="dropdown">
+                                                <button class="menuu">⋮</button>
+                                                <div class="dropdown-content">
+                                                    <a href="{ url_for('edit_subtask', subtask_id=subtask.id) }"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z"/></svg><span>Edit</span></a>
+                                                    <a hx-post="{ url_for('complete_subtask',subtask_id=subtask.id) }" hx-target="#subtask-{ subtask.id }" hx-swap="delete swap:200ms" class=""><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z"/></svg><span>Complete</span></a>
+                                                    <a hx-delete="{ url_for('delete_subtask', subtask_id=subtask.id) }" hx-target="#subtask-{ subtask.id }" hx-swap="delete swap:200ms"  hx-confirm="Are you sure you want to delete this subtask?" class=""><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24"><path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360Z"/></svg><span>Delete</span></a>
+                                                </div>
+                                            </div>
+
+                                        </div><hr>'''
+                html_response += '<div class="task-title"><div class="d-flex flex-wrap align-items-center gap-3 mt-2">'
                 if subtask.due_date:
-                    html_response+=f"<p><strong>Due date:</strong> { subtask.friendly_date }</p>"
+                    html_response+=f'''<span class="badge bg-light text-secondary border d-inline-flex align-items-center gap-1 py-1.5 px-2.5 rounded-pill" style="font-size: 0.8rem;"><i class="bi bi-calendar-event"></i><strong>Due date: </strong>{ subtask.friendly_date }</span>
+                                                    <span class="text-muted d-none d-sm-inline">•</span>'''
                 if subtask.category:
-                    html_response+=f"<p><strong>Category: </strong>{ subtask.category }</p>"
-                html_response+=f"<p><strong>Priority: </strong><span>{ subtask.priority }</span></p></div>"
-                html_response+=f'''<div class="dropdown"><button class="menuu">⋮</button>
-                <div class="dropdown-content">
-                <a href="{ url_for('edit_subtask', subtask_id=subtask.id) }"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z"/></svg><span>Edit</span></a>
-                <a hx-post="{ url_for('complete_subtask',subtask_id=subtask.id) }" hx-target="#task-{ subtask.id }" hx-swap="delete swap:200ms" class=""><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z"/></svg><span>Complete</span></a>
-                <a hx-delete="{ url_for('delete_subtask', subtask_id=subtask.id) }" hx-target="#task-{ subtask.id }" hx-swap="delete swap:200ms"  hx-confirm="Are you sure you want to delete this subtask?" class=""><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24"><path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360Z"/></svg><span>Delete</span></a>
-                </div></div></div><hr>'''
-                html_response+=f'''<div class="task-title"><p>{ subtask.title }</p></div></div></li>'''
+                    html_response+=f'''<span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle d-inline-flex align-items-center gap-1 py-1.5 px-2.5 rounded-pill"><i class="bi bi-tag"></i><strong>Category: </strong>{ task.category }</span>
+                                                    <span class="text-muted d-none d-sm-inline">•</span>'''
+                if subtask.priority.lower() == 'high':
+                    html_response += '''<span class="badge bg-danger-subtle text-danger border border-danger-subtle d-inline-flex align-items-center gap-1 py-1.5 px-2.5 rounded-pill" style="font-size: 0.8rem;">
+                                                            <span class="rounded-circle bg-danger" style="width: 6px; height: 6px;"></span>
+                                                            High Priority
+                                                        </span>'''
+                elif subtask.priority.lower() == 'medium':
+                    html_response += '''<span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle d-inline-flex align-items-center gap-1 py-1.5 px-2.5 rounded-pill" style="font-size: 0.8rem;">
+                                                            <span class="rounded-circle bg-warning" style="width: 6px; height: 6px;"></span>
+                                                            Medium Priority
+                                                        </span>'''
+                else:
+                    html_response += '''<span class="badge bg-success-subtle text-success border border-success-subtle d-inline-flex align-items-center gap-1 py-1.5 px-2.5 rounded-pill" style="font-size: 0.8rem;">
+                                                            <span class="rounded-circle bg-success" style="width: 6px; height: 6px;"></span>
+                                                            Low Priority
+                                                        </span>'''
+                html_response += '</div></div></div></li>'
             html_response+='</ul>'
         return html_response,200
     except:
@@ -377,10 +452,10 @@ def quickadd():
 @app.route('/add_subtask/<task_id>',methods=["POST",'GET'])
 @login_required
 def add_subtask(task_id):
-    user = User.query.get(session["user_id"])
-    name=user.name
     if request.method=="POST":
         try:
+            user = User.query.get(session["user_id"])
+            name=user.name
             parent_task=Task.query.filter_by(user_id=session['user_id'],id=task_id).first_or_404()
             task = request.form["task"]
             priority = request.form["priority"]
@@ -406,11 +481,11 @@ def add_subtask(task_id):
 @app.route('/edit/<int:task_id>', methods=['GET','POST'])
 @login_required
 def edit_task(task_id):
-    user = User.query.get(session["user_id"])
-    name=user.name
-    task=Task.query.filter_by(id=task_id,user_id=session["user_id"]).first_or_404()
     if request.method=="POST":
         try:
+            user = User.query.get(session["user_id"])
+            name=user.name
+            task=Task.query.filter_by(id=task_id,user_id=session["user_id"]).first_or_404()
             updated_task=request.form["task"]
             task.title=updated_task
             task.priority=request.form['priority']
@@ -442,11 +517,11 @@ def edit_task(task_id):
 @app.route('/edit_suggestion_task/<task_id>/<_id_>',methods=['POST','GET'])
 @login_required
 def edit_suggestion_task(task_id,_id_):
-    user = User.query.get(session["user_id"])
-    name=user.name
-    task=AISuggestions.query.filter_by(id=task_id,user_id=session["user_id"]).first_or_404()
     if request.method=="POST":
         try:
+            user = User.query.get(session["user_id"])
+            name=user.name
+            task=AISuggestions.query.filter_by(id=task_id,user_id=session["user_id"]).first_or_404()
             task.title=request.form["task"]
             task.priority=request.form['priority']
             task.category=request.form['category']
@@ -468,26 +543,29 @@ def edit_suggestion_task(task_id,_id_):
 @app.route('/edit_subtask/<subtask_id>',methods=['POST','GET'])
 @login_required
 def edit_subtask(subtask_id):
-    user = User.query.get(session["user_id"])
-    name=user.name
-    subtask=SubTask.query.filter_by(id=subtask_id,user_id=session["user_id"]).first_or_404()
-    if request.method=="POST":
-        try:
-            subtask.title=request.form["task"]
-            subtask.priority=request.form['priority']
-            subtask.category=request.form['category']
-            due_date=request.form['due_date']
-            if due_date:
-                from datetime import date
-                subtask.due_date = date.fromisoformat(due_date)
-            else:
-                subtask.due_date = None
-            db.session.commit()
-            flash("Subtask updated successfully!", "success")
-        except Exception:
-            flash("Something went wrong", "error")
-            db.session.rollback()
-        return redirect(url_for('dashboard'))
+    try:
+        user = User.query.get(session["user_id"])
+        name=user.name
+        subtask=SubTask.query.filter_by(id=subtask_id,user_id=session["user_id"]).first_or_404()
+        if request.method=="POST":
+            try:
+                subtask.title=request.form["task"]
+                subtask.priority=request.form['priority']
+                subtask.category=request.form['category']
+                due_date=request.form['due_date']
+                if due_date:
+                    from datetime import date
+                    subtask.due_date = date.fromisoformat(due_date)
+                else:
+                    subtask.due_date = None
+                db.session.commit()
+                flash("Subtask updated successfully!", "success")
+            except Exception:
+                flash("Something went wrong", "error")
+                db.session.rollback()
+            return redirect(url_for('dashboard'))
+    except:
+        pass
     return render_template("add_task.html",title='Edit Subtask', task=subtask,name=name,submit_url=url_for('edit_subtask',subtask_id=subtask.id))
 
 @app.route('/delete/<int:task_id>', methods=['DELETE'])
@@ -605,12 +683,14 @@ def complete_task(task_id):
         user.total_completed_tasks += 1
         #!!
         if user.categories:
-            liste = user.categories.split(',')
-            if task.category != None:
-                liste.append(task.category)
-            user.categories = ",".join(liste)
+            current_categories = user.categories.copy()
+            if task.category in current_categories:
+                current_categories[task.category] += 1
+            else:
+                current_categories[task.category] = 1
+            user.categories = current_categories
         else:
-            user.categories = task.category
+            user.categories = {task.category:1}
         #!!
         if user.priorities:
             priorities=user.priorities
@@ -629,7 +709,8 @@ def complete_task(task_id):
             if remaining==0:
                 return '<main class="content" id="tasks-container" hx-swap-oob="true"><h2 class="no-tasks-message">No active tasks.</h2></main>', 200
             return f'''<ul class="subtask-tree" id="subtasks-{task_id}" hx-swap-oob="delete"></ul>''',200
-    except:
+    except Exception as r:
+        print(f"============={r}")
         db.session.rollback()
         if request.headers.get("HX-Request"):
             return "",400
@@ -656,9 +737,9 @@ def complete_subtask(subtask_id):
 @app.route('/completed')
 @login_required
 def completed_tasks():
-    user = User.query.get(session["user_id"])
-    name=user.name
     try:
+        user = User.query.get(session["user_id"])
+        name=user.name
         purge_expired_tasks()
         tasks = CompletedTask.query.filter_by(user_id=session["user_id"]).all()
         for i in tasks:
@@ -677,9 +758,9 @@ def completed_tasks():
 @app.route('/break-down/<task_id>',methods=['GET','POST'])
 @login_required
 def break_down(task_id):
-    user = User.query.get(session["user_id"])
-    name=user.name
     try:
+        user = User.query.get(session["user_id"])
+        name=user.name
         AISuggestions.query.filter_by(user_id=session['user_id']).delete()
         task=Task.query.filter_by(user_id=session['user_id'],id=task_id).first_or_404()
         subtasks=ai_models.break_down_task(task.title)
@@ -728,26 +809,24 @@ def cancel_break_down():
 def statics():
     try: 
         user=User.query.filter_by(id=session['user_id']).first_or_404()
-        statics=insights(user)
+        name= user.name
+        print(f"============{name}")
         charts=[]
+        statics=insights(user)
+        summary = ai_models.sammary_generator(statics)
+        streak = user.streak
         category_labels=[]
         category_values=[]
-        category_results = db.session.query(CompletedTask.category, db.func.count(CompletedTask.id)).group_by(CompletedTask.category).all()
-        if category_results:
-            for r in category_results:
-                if r[0] :
-                    category_labels.append(r[0])
-                    category_values.append(r[1])
-        else:
-            category_labels=['NoData']
+        user_categories = user.categories
+        category_labels = [i for i in user_categories.keys()]
+        category_values = [i for i in user_categories.values()]
         charts.append({'id':'categorychart','title':'Categories Distribution','labels':category_labels,'values':category_values,'type':'doughnut','indexAxis':'x'})
         priority_labels=['High','Medium','Low']
         priority_values=[value for value in statics['Count completed tasks by priority'].values()]
         charts.append({'id':'prioritychart','title':'Priority Distribution','labels':priority_labels,'values':priority_values,'type':'bar','indexAxis':'y'})
-        summary = 'test period'
-    except Exception as e:
-        print(f"Error============ {e}")
-    return render_template('statics.html', charts=charts, statics=statics, status='statics', summary=summary)
+    except:
+        pass
+    return render_template('statics.html', charts=charts, statics=statics, status='statics', summary=summary, streak=streak, name=name)
 @app.route("/logout")
 def logout():
     if "user_id" not in session:

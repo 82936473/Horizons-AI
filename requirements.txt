@@ -1,5 +1,7 @@
 Flask
 Flask-SQLAlchemy
+Flask-Mail
+Flask-APScheduler
 SQLAlchemy
 Werkzeug
 gunicorn
@@ -7,3 +9,4 @@ python-dotenv
 openai
 langchain-openai
 email-validator
+premailer

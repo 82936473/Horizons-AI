@@ -7,10 +7,13 @@
 {% block content %}
 <div class="content">
     {% block sidebar %} {{ super() }} {% endblock %}
+        <span class="badge bg-warning text-dark fw-bold">{{ streak }} Day Streak 🔥</span>
     <div class="statics">
         <div class="header">
-            <h1>Statistics Dashboard</h1>
-            <h2>Your productivity insights and activity trends.</h2>
+            <div class="title">
+                <h1>Statistics Dashboard</h1>
+                <h2>Your productivity insights and activity trends.</h2>
+            </div>
             <div class="summary-card">
                 <div class="summary-header">
                     🎯 Summary
@@ -28,17 +31,19 @@
             </div>
             <div style="border-left: 4px solid #22c55e;" class="static-item">
                 <span class="stat-title"><i class="fas fa-chart-line"></i> Completed tasks this week</span>
-                <p class="value">{{ statics['Total completed tasks this week'] }}</p>
-                <div class="stat-trend">
-                    {% if statics['weekly change'][0] == 'no change from last week' %}
-                        <p style="color:#22c55e">Stable</p>
-                    {% elif statics['weekly change'][0] == 'no data from last week' %}
-                        <!-- Nothing -->
-                    {% elif statics['weekly change'][1] == 0 %}
-                        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#EA3323"><path d="M480-240 240-480l56-56 144 144v-368h80v368l144-144 56 56-240 240Z"/></svg><p style="color:#ef4444">{{ statics['weekly change'][0] }}</p>
-                    {% elif statics['weekly change'][1] == 1 %}
-                       <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#75FBFD"><path d="M440-240v-368L296-464l-56-56 240-240 240 240-56 56-144-144v368h-80Z"/></svg><p style="color:#22c55e;">{{ statics['weekly change'][0] }}</p>
-                    {% endif %}
+                <div class="values">
+                    <p class="value">{{ statics['Total completed tasks this week'] }}</p>
+                    <div class="stat-trend">
+                        {% if statics['weekly change'][0] == 'no change from last week' %}
+                            <p style="color:#22c55e">Stable</p>
+                        {% elif statics['weekly change'][0] == 'no data from last week' %}
+                            <!-- Nothing -->
+                        {% elif statics['weekly change'][1] == 0 %}
+                            <div class="svg-container"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#ef4444"><path d="M480-240 240-480l56-56 144 144v-368h80v368l144-144 56 56-240 240Z"/></svg><p style="color:#ef4444">{{ statics['weekly change'][0] }}</p></div>
+                        {% elif statics['weekly change'][1] == 1 %}
+                            <div class="svg-container"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#22c55e"><path d="M440-240v-368L296-464l-56-56 240-240 240 240-56 56-144-144v368h-80Z"/></svg><p style="color:#22c55e;">{{ statics['weekly change'][0] }}</p></div>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
             {% if statics['Average completion time in hours'] %}
@@ -91,7 +96,7 @@
                 datasets: [{
                     label: title,
                     data: values,
-                    backgroundColor: ['#ff4a5a','#36a2eb','#ffcd56','#4bc0c0','#9966ff','#22c55e','#f97316'],
+                    backgroundColor: ['#ff0000','#ffa600','#00ff5e','#4bc0c0','#9966ff','#22c55e','#f97316'],
                     borderWidth: 1
                 }]
             },
