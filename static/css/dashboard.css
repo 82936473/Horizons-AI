@@ -15,11 +15,12 @@
 .task-card{
     width: 100%;
     max-width:900px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
     border-radius:19px;
     padding:15px 15px;
     margin-bottom:22px;
     background: #ffffff;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03) !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03) ;
     display:block;   
     box-sizing:border-box;
     transition:opacity 200ms ease-out,transform 200ms ease-out;

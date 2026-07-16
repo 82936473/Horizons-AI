@@ -279,10 +279,13 @@ def dashboard():
 @app.route("/add", methods=["GET", "POST"])
 @login_required
 def add_task():
+    try:
+        user = User.query.get(session["user_id"])
+        name=user.name
+    except:
+        name = 'None'
     if request.method == "POST":
         try:
-            user = User.query.get(session["user_id"])
-            name=user.name
             task = request.form["task"]
             priority = request.form["priority"]
             due_date = request.form["due_date"]
@@ -452,10 +455,13 @@ def quickadd():
 @app.route('/add_subtask/<task_id>',methods=["POST",'GET'])
 @login_required
 def add_subtask(task_id):
+    try:
+        user = User.query.get(session["user_id"])
+        name=user.name
+    except:
+        naje='None'
     if request.method=="POST":
         try:
-            user = User.query.get(session["user_id"])
-            name=user.name
             parent_task=Task.query.filter_by(user_id=session['user_id'],id=task_id).first_or_404()
             task = request.form["task"]
             priority = request.form["priority"]
@@ -481,11 +487,14 @@ def add_subtask(task_id):
 @app.route('/edit/<int:task_id>', methods=['GET','POST'])
 @login_required
 def edit_task(task_id):
+    try:
+        user = User.query.get(session["user_id"])
+        task=Task.query.filter_by(id=task_id,user_id=session["user_id"]).first_or_404()
+        name=user.name
+    except:
+        name='None'
     if request.method=="POST":
         try:
-            user = User.query.get(session["user_id"])
-            name=user.name
-            task=Task.query.filter_by(id=task_id,user_id=session["user_id"]).first_or_404()
             updated_task=request.form["task"]
             task.title=updated_task
             task.priority=request.form['priority']
@@ -517,6 +526,12 @@ def edit_task(task_id):
 @app.route('/edit_suggestion_task/<task_id>/<_id_>',methods=['POST','GET'])
 @login_required
 def edit_suggestion_task(task_id,_id_):
+    try:
+        user = User.query.get(session["user_id"])
+        task=Task.query.filter_by(id=task_id,user_id=session["user_id"]).first_or_404()
+        name=user.name
+    except:
+        name='None'
     if request.method=="POST":
         try:
             user = User.query.get(session["user_id"])
