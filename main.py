@@ -27,7 +27,7 @@ tasks=None
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///horizons.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db.init_app(app)
-from models import CompletedTask, User, Task, AISuggestions, SubTask
+from models import CompletedTask, User, Task, AISuggestions, SubTask, Project, Milestone
 with app.app_context():
     db.create_all()
 ai_models=AIModels()
@@ -232,6 +232,7 @@ def user_name():
         # greating_email(user.username,name) #!#! Make this as comment while offline testing
         user.streak = 1
         db.session.commit()
+        session['name'] = name
         return redirect(url_for('dashboard'))
     return render_template("user's_name.html")
 
@@ -266,7 +267,7 @@ def dashboard():
     if user is None:
         session.clear()
         return redirect(url_for("log_in"))
-    name=user.name
+    name=session['name']
     query = Task.query.filter_by(user_id=session["user_id"])
     if sort == "priority":
         query = query.order_by(case((Task.priority == "High", 1),(Task.priority == "Medium", 2),(Task.priority == "Low", 3),))
@@ -279,11 +280,7 @@ def dashboard():
 @app.route("/add", methods=["GET", "POST"])
 @login_required
 def add_task():
-    try:
-        user = User.query.get(session["user_id"])
-        name=user.name
-    except:
-        name = 'None'
+    name=session['name']
     if request.method == "POST":
         try:
             task = request.form["task"]
@@ -455,11 +452,7 @@ def quickadd():
 @app.route('/add_subtask/<task_id>',methods=["POST",'GET'])
 @login_required
 def add_subtask(task_id):
-    try:
-        user = User.query.get(session["user_id"])
-        name=user.name
-    except:
-        naje='None'
+    name = session['name']
     if request.method=="POST":
         try:
             parent_task=Task.query.filter_by(user_id=session['user_id'],id=task_id).first_or_404()
@@ -487,12 +480,8 @@ def add_subtask(task_id):
 @app.route('/edit/<int:task_id>', methods=['GET','POST'])
 @login_required
 def edit_task(task_id):
-    try:
-        user = User.query.get(session["user_id"])
-        task=Task.query.filter_by(id=task_id,user_id=session["user_id"]).first_or_404()
-        name=user.name
-    except:
-        name='None'
+    name = session['name']
+    task=Task.query.filter_by(id=task_id,user_id=session["user_id"]).first_or_404()
     if request.method=="POST":
         try:
             updated_task=request.form["task"]
@@ -526,12 +515,8 @@ def edit_task(task_id):
 @app.route('/edit_suggestion_task/<task_id>/<_id_>',methods=['POST','GET'])
 @login_required
 def edit_suggestion_task(task_id,_id_):
-    try:
-        user = User.query.get(session["user_id"])
-        task=Task.query.filter_by(id=task_id,user_id=session["user_id"]).first_or_404()
-        name=user.name
-    except:
-        name='None'
+    name = session['name']
+    task=Task.query.filter_by(id=task_id,user_id=session["user_id"]).first_or_404()
     if request.method=="POST":
         try:
             user = User.query.get(session["user_id"])
@@ -559,8 +544,7 @@ def edit_suggestion_task(task_id,_id_):
 @login_required
 def edit_subtask(subtask_id):
     try:
-        user = User.query.get(session["user_id"])
-        name=user.name
+        name = session['name']
         subtask=SubTask.query.filter_by(id=subtask_id,user_id=session["user_id"]).first_or_404()
         if request.method=="POST":
             try:
@@ -604,12 +588,14 @@ def delete_task(task_id):
 @app.route("/delete_suggestion_task/<int:task_id>/<_id_>",methods=['DELETE'])
 @login_required
 def delete_suggestion_task(task_id,_id_):
-    user = User.query.get(session["user_id"])
-    name=user.name
+    name = session['name']
     try:
         task = AISuggestions.query.filter_by(id=task_id, user_id=session["user_id"]).first_or_404()
         db.session.delete(task)
         db.session.commit()
+        remaining = AISuggestions.query.filter_by(user_id=session['user_id']).count()
+        if remaining == 0:
+            return render_template('dashboard')
         if request.headers.get('HX-Request'):
             return "",200
     except:
@@ -753,8 +739,7 @@ def complete_subtask(subtask_id):
 @login_required
 def completed_tasks():
     try:
-        user = User.query.get(session["user_id"])
-        name=user.name
+        name = session['name']
         purge_expired_tasks()
         tasks = CompletedTask.query.filter_by(user_id=session["user_id"]).all()
         for i in tasks:
@@ -774,8 +759,7 @@ def completed_tasks():
 @login_required
 def break_down(task_id):
     try:
-        user = User.query.get(session["user_id"])
-        name=user.name
+        name = session['name']
         AISuggestions.query.filter_by(user_id=session['user_id']).delete()
         task=Task.query.filter_by(user_id=session['user_id'],id=task_id).first_or_404()
         subtasks=ai_models.break_down_task(task.title)
@@ -824,8 +808,7 @@ def cancel_break_down():
 def statics():
     try: 
         user=User.query.filter_by(id=session['user_id']).first_or_404()
-        name= user.name
-        print(f"============{name}")
+        name = session['name']
         charts=[]
         statics=insights(user)
         summary = ai_models.sammary_generator(statics)
@@ -839,9 +822,187 @@ def statics():
         priority_labels=['High','Medium','Low']
         priority_values=[value for value in statics['Count completed tasks by priority'].values()]
         charts.append({'id':'prioritychart','title':'Priority Distribution','labels':priority_labels,'values':priority_values,'type':'bar','indexAxis':'y'})
+    except Exception as e:
+        print(f"Error: {e}")
+    return render_template('statics.html', title="Statics",charts=charts, statics=statics, status='statics', summary=summary, streak=streak, name=name)
+
+#!#! Projects sectiion 
+@app.route('/projects')
+@login_required
+def projects():
+    try:
+        name = session['name']
+        projects = Project.query.filter_by(user_id=session['user_id']).all()
+    except Exception as e:
+        print(f"Error: {e}")
+    return render_template("projects/projects.html", projects=projects, name=name, title="Projects")
+        
+@app.route('/project/<int:project_id>')
+@login_required
+def project(project_id):
+    try:
+        name = session['name']
+        project = Project.query.filter_by(user_id=session['user_id'],id=project_id).first_or_404()
+    except Exception as e:
+        print(f"Error: {e}")
+    return render_template('projects/project.html',title=project.title, name=name, project=project)
+
+@app.route('/milestone/<int:milestone_id>')
+@login_required
+def milestone(milestone_id):
+    try:
+        name = session['name']
+        milestone = Milestone.query.filter_by(user_id=session['user_id'],id=milestone_id).first_or_404()
+    except Exception as e:
+        print(f"Error: {e}")
+    return render_template('projects/milestone.html',title=milestone.title,name=name, milestone=milestone)
+
+@app.route('/project/new',methods=['POST','GET'])
+@login_required
+def add_project():
+    name = session['name']
+    if request.method == 'POST':
+        try:
+            title = request.form['title']
+            description = request.form['description']
+            color = request.form['color']
+            goal = request.form['goal']
+            target_date = request.form['target_day']
+            if target_date:
+                target_date=date.fromisoformat(target_date)
+            else:
+                target_date = None
+            new_project = Project(user_id=session['user_id'],title=title, description=description, color=color, goal=goal)
+            db.session.add(new_project)
+            db.session.commit()
+            flash("Project added successfully","success")
+        except:
+            db.session.rollback()
+            flash("Something went wrong","error")
+        return redirect(url_for("project",project_id=new_project.id))
+    return render_template('projects/add_project.html', name=name)
+
+@app.route('/project/<int:project_id>/milestone/new', methods=['POST','GET'])
+@login_required
+def add_add_milestone(project_id):
+    name = session['name']
+    if request.method == 'POST':
+        try:
+            title = request.form['title']
+            description = request.form['description']
+            target_date = request.form['target_date']
+            if target_date :
+                target_date = date.fromisoformat(target_date)
+            else:
+                target_date = None
+            new_milestone = Milestone(user_id=session['user_id'],project_id=project_id,title=title,description=description,target_date=target_date)
+            db.session.add(new_milestone)
+            db.session.commit()
+            flash("New Milestone added successfully",'success')
+            return redirect(url_for('project',project_id=project_id))
+        except:
+            flash("Something went wrong","error")
+            db.session.rollback()
+    return render_template('projects/add_milestone.html')
+
+@app.route('/milestone/<int:milestone_id>/task/new', methods=['POST','GET'])
+@login_required
+def add_milestone_task(milestone_id):
+    name = session['name']
+    if request.method == 'POST':
+        try:
+            task = request.form['task']
+            priority = request.form['priority']
+            category = request.form['category']
+            due_date = request.form['due_date']
+            if due_date:
+                due_date = date.fromisoformat(due_date)
+            else:
+                due_date = None
+            new_task = Task(user_id=session['user_id'], milestone_id=milestone_id,title=task, priority=priority,category=category)
+            db.session.add(new_task)
+            db.session.commit()
+            flash("Task added successfully")
+            return redirect(url_for('milestone',milestone_id=milestone_id))
+        except:
+            db.session.rollback()
+            flash("Something went wrong", "error")
+    return render_template('projects/add_milestone_task.html',name=name)
+
+@app.route('/project/<int:project_id>/edit', methods=['POST','GET'])
+@login_required
+def edit_project(project_id):
+    name = session['name']
+    project = Project.query.filter_by(user_id=session['user_id'], id=project_id).first_or_404()
+    if request.method == 'POST':
+        try:
+            project.title = request.form['title']
+            project.description = request.form['description']
+            project.color = request.form['color']
+            project.goal = request.form['goal']
+            target_date = request.form['target_day']
+            if target_date:
+                project.target_date=date.fromisoformat(target_date)
+            else:
+                project.target_date = None
+            db.session.commit()
+            flash('Project updated successfully',"success")
+            return redirect(url_for("project",project_id=project_id))
+        except:
+            db.session.rollback()
+            flash("Something went wrong", "error")
+    return render_template('projects/edit_project.html',name=name,project=project)
+
+@app.route('/milestone/<int:milestone_id>/edit', methods=['POST','GET'])
+@login_required
+def edit_milestone(milestone_id):
+    name = session['name']
+    milestone = Milestone.query.filter_by(user_id=session['user_id'], id=milestone_id).first_or_404()
+    if request.method == 'POST':
+        try:
+            milestone.title = request.form['title']
+            milestone.description = request.form['description']
+            target_date = request.form['target_date']
+            if target_date :
+                milestone.target_date = date.fromisoformat(target_date)
+            else:
+                milestone.target_date = None
+            db.session.commit()
+            flash('Milestone updated successfully')
+            return redirect(url_for('milestone',milestone_id=milestone_id))
+        except:
+            db.session.rollback()
+            flash("Something went wrong", "error")
+    return render_template('edit_milestone',name=name,milestone=milestone)
+
+#!#! Need HX-Request proccess
+@app.route('/project/<int:project_id>/delete')
+@login_required
+def delete_project(project_id):
+    try:
+        project = Project.query.filter_by(user_id=session['user_id'],id=project_id).first_or_404()
+        db.session.delete(project)
+        db.session.commit()
+        flash('Project deleted', 'success')
     except:
-        pass
-    return render_template('statics.html', charts=charts, statics=statics, status='statics', summary=summary, streak=streak, name=name)
+        db.session.rollback()
+        flash("Something went wrong", "error") 
+    return redirect(url_for('projects'))
+
+@app.route('/milestone/<int:milestone_id>/delete')
+@login_required
+def delete_milestone(milestone_id):
+    try:
+        milestone = Milestone.query.filter_by(user_id=session['user_id'],id=milestone_id).first_or_404()
+        project_id = milestone.project_id
+        db.session.delete(milestone)
+        db.session.commit()
+        flash('Milestone deleted', 'success')
+    except:
+        db.session.rollback()
+        flash("Something went wrong", "error") 
+    return redirect(url_for('project',project_id=project_id))
+
 @app.route("/logout")
 def logout():
     if "user_id" not in session:
