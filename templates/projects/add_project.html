@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+      .color-options-grid {
+  display: flex;
+  gap: 12px;
+}
+
+/* Hide the native checkbox circle */
+.color-circle-label input[type="radio"] {
+  display: none;
+}
+
+/* Base style for the custom color circle */
+.color-circle {
+  display: block;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+/* Zoom slightly when hovering over a circle */
+.color-circle:hover {
+  transform: scale(1.1);
+}
+
+/* Give the active selection a highlighted outer ring */
+.color-circle-label input[type="radio"]:checked + .color-circle {
+  border-color: #ffffff; /* White ring around active choice */
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.4);
+  transform: scale(1.1);
+}
+    </style>
+</head>
+<body>
+  <form action="{{ url_for('add_project') }}" method="POST">
+    <input type="text" name="title" placeholder="title" required>
+    <input type="text" name="description" placeholder="description" required>
+    <input type="text" name="goal" placeholder="goal" required>
+    <div class="mb-3">
+      <label for="projectColor" class="form-label text-light">Project Color</label>
+      <select class="form-select bg-dark text-white border-secondary" id="projectColor" name="color">
+        <option value="#3B82F6" selected>Blue (Default)</option>
+        <option value="#10B981">Green</option>
+        <option value="#EF4444">Red</option>
+        <option value="#F59E0B">Yellow</option>
+        <option value="#8B5CF6">Purple</option>
+      </select>
+    </div>
+    <input type="date" name="target_day">
+<input name="submit" type="submit">
+</form>
+</body>
+</html>

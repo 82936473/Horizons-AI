@@ -251,6 +251,7 @@ def log_in():
                 raise ValueError("Invalid Email or Password")
             session["user_id"] = user.id
             session["username"] = user.username
+            session["name"] = user.name
             purge_expired_tasks()
             return redirect(url_for("dashboard"))
         except ValueError as e:
@@ -857,17 +858,17 @@ def milestone(milestone_id):
         print(f"Error: {e}")
     return render_template('projects/milestone.html',title=milestone.title,name=name, milestone=milestone)
 
-@app.route('/project/new',methods=['POST','GET'])
+@app.route('/projects/new',methods=['POST','GET'])
 @login_required
 def add_project():
     name = session['name']
     if request.method == 'POST':
         try:
-            title = request.form['title']
-            description = request.form['description']
-            color = request.form['color']
-            goal = request.form['goal']
-            target_date = request.form['target_day']
+            title = request.form.get('title')
+            description = request.form.get('description')
+            color = request.form.get('color')
+            goal = request.form.get('goal')
+            target_date = request.form.get('target_day')
             if target_date:
                 target_date=date.fromisoformat(target_date)
             else:
@@ -876,15 +877,17 @@ def add_project():
             db.session.add(new_project)
             db.session.commit()
             flash("Project added successfully","success")
-        except:
+        except Exception as d:
+            print(f"======={d}")
             db.session.rollback()
             flash("Something went wrong","error")
-        return redirect(url_for("project",project_id=new_project.id))
+        return redirect(url_for("projects"))
+        # return redirect(url_for("project",project_id=new_project.id))
     return render_template('projects/add_project.html', name=name)
 
 @app.route('/project/<int:project_id>/milestone/new', methods=['POST','GET'])
 @login_required
-def add_add_milestone(project_id):
+def add_milestone(project_id):
     name = session['name']
     if request.method == 'POST':
         try:
@@ -983,10 +986,19 @@ def delete_project(project_id):
         project = Project.query.filter_by(user_id=session['user_id'],id=project_id).first_or_404()
         db.session.delete(project)
         db.session.commit()
-        flash('Project deleted', 'success')
+        remaining = Project.query.filter_by(user_id=session['user_id'])
+        if request.headers.get('HX-Request'):
+            if remaining==0:
+                return '''<main class="content" id="projects-container" hx-swap-oob="true"><div class="no-projects-message">
+                        <svg xmlns="http://www.w3.org/2000/svg" height="48px" viewBox="0 -960 960 960" width="48px" fill="#000000"><path d="M330-120 120-330v-300l210-210h300l210 210v300L630-120H330Zm27-195 123-123 123 123 42-42-123-123 123-123-42-42-123 123-123-123-42 42 123 123-123 123 42 42Zm-2 135h250l175-175v-250L605-780H355L180-605v250l175 175Zm125-300Z"/></svg>
+                        <h2>No Projects</h2>
+                        <button type="button" class="btn btn-info">Add a project</button>
+                        </div></main>''', 200
+            return "",200
     except:
         db.session.rollback()
-        flash("Something went wrong", "error") 
+        if request.headers.get("HX-Request"):
+            return "",400
     return redirect(url_for('projects'))
 
 @app.route('/milestone/<int:milestone_id>/delete')

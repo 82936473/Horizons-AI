@@ -74,11 +74,31 @@ class Project(db.Model):
     title = db.Column(db.String(300), nullable=False)
     description = db.Column(db.Text)
     color = db.Column(db.String(20), default="#3B82F6")
-    status = db.Column(db.String(20), default="active")
+    status = db.Column(db.String(20), default="active") # active, completed, maybe(archived)
     goal = db.Column(db.Text)
     target_date = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     progress = db.Column(db.Float, default=0)
     updated_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    @property
+    def target_day(self):
+        today = date.today()
+        if self.target_date  == today:
+            return "Today"
+        elif self.target_date == today + timedelta(days=1):
+            return "Tomorrow"
+        elif self.target_date == today - timedelta(days=1):
+            return "Yesterday"
+        return self.target_date.strftime("%d-%m-%Y")
+    @property
+    def updated_day(self):
+        today = date.today()
+        if self.updated_at  == today:
+            return "Today"
+        elif self.updated_at == today + timedelta(days=1):
+            return "Tomorrow"
+        elif self.updated_at == today - timedelta(days=1):
+            return "Yesterday"
+        return self.updated_at.strftime("%d-%m-%Y")
     completed_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 class Milestone(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -88,3 +108,24 @@ class Milestone(db.Model):
     target_date = db.Column(db.Date)
     status = db.Column(db.String(20), default="active")
     tasks = db.relationship("Task", backref="milestone", lazy=True, cascade="all, delete-orphan")
+    updated_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    @property
+    def target_day(self):
+        today = date.today()
+        if self.target_date  == today:
+            return "Today"
+        elif self.target_date == today + timedelta(days=1):
+            return "Tomorrow"
+        elif self.target_date == today - timedelta(days=1):
+            return "Yesterday"
+        return self.target_date.strftime("%d-%m-%Y")
+    @property
+    def updated_day(self):
+        today = date.today()
+        if self.updated_at  == today:
+            return "Today"
+        elif self.updated_at == today + timedelta(days=1):
+            return "Tomorrow"
+        elif self.updated_at == today - timedelta(days=1):
+            return "Yesterday"
+        return self.updated_at.strftime("%d-%m-%Y")

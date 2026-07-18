@@ -197,7 +197,6 @@
     border-radius:8px;
     animation:fadeOut 5s forwards;
     animation: slideInOut 5s ease forwards;
-    /* the backgroud-color is defined in th main code in dashbord.html*/
 }
 @keyframes slideInOut{
     0%{
