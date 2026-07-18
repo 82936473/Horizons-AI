@@ -578,7 +578,11 @@ def delete_task(task_id):
         remaining = Task.query.filter_by(user_id=session["user_id"]).count()
         if request.headers.get('HX-Request'):
             if remaining==0:
-                return '<main class="content" id="tasks-container" hx-swap-oob="true"><h2 class="no-tasks-message">No active tasks.</h2></main>', 200
+                return f'''<main class="content" id="tasks-container" hx-swap-oob="true"><div class="no-tasks-message">
+                <svg xmlns="http://www.w3.org/2000/svg" height="100px" viewBox="0 -960 960 960" width="100px" fill="#000000"><path d="M330-120 120-330v-300l210-210h300l210 210v300L630-120H330Zm27-195 123-123 123 123 42-42-123-123 123-123-42-42-123 123-123-123-42 42 123 123-123 123 42 42Zm-2 135h250l175-175v-250L605-780H355L180-605v250l175 175Zm125-300Z"/></svg>
+                <h1>No active tasks.</h1>
+                <a href="{ url_for('add_task') }" class="btn btn-info add_task"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#FFFFFF"><path d="M440-120v-320H120v-80h320v-320h80v320h320v80H520v320h-80Z"/></svg><span>Add Task</span></a>
+                </div></main>''', 200
             return f'''<ul class="subtask-tree" id="subtasks-{task_id}" hx-swap-oob="delete"></ul>''',200
     except:
         db.session.rollback()
@@ -709,7 +713,11 @@ def complete_task(task_id):
         remaining = Task.query.filter_by(user_id=session["user_id"]).count()
         if request.headers.get("HX-Request"):
             if remaining==0:
-                return '<main class="content" id="tasks-container" hx-swap-oob="true"><h2 class="no-tasks-message">No active tasks.</h2></main>', 200
+                return f'''<main class="content" id="tasks-container" hx-swap-oob="true"><div class="no-tasks-message">
+                <svg xmlns="http://www.w3.org/2000/svg" height="100px" viewBox="0 -960 960 960" width="100px" fill="#000000"><path d="M330-120 120-330v-300l210-210h300l210 210v300L630-120H330Zm27-195 123-123 123 123 42-42-123-123 123-123-42-42-123 123-123-123-42 42 123 123-123 123 42 42Zm-2 135h250l175-175v-250L605-780H355L180-605v250l175 175Zm125-300Z"/></svg>
+                <h1>No active tasks.</h1>
+                <a href="{ url_for('add_task') }" class="btn btn-info add_task"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#FFFFFF"><path d="M440-120v-320H120v-80h320v-320h80v320h320v80H520v320h-80Z"/></svg><span>Add Task</span></a>
+                </div></main>''', 200
             return f'''<ul class="subtask-tree" id="subtasks-{task_id}" hx-swap-oob="delete"></ul>''',200
     except Exception as r:
         print(f"============={r}")
@@ -846,7 +854,7 @@ def project(project_id):
         project = Project.query.filter_by(user_id=session['user_id'],id=project_id).first_or_404()
     except Exception as e:
         print(f"Error: {e}")
-    return render_template('projects/project.html',title=project.title, name=name, project=project)
+    return render_template('projects/project.html',title=project.title, name=name, project=project, status="projects")
 
 @app.route('/milestone/<int:milestone_id>')
 @login_required
@@ -883,7 +891,7 @@ def add_project():
             flash("Something went wrong","error")
         return redirect(url_for("projects"))
         # return redirect(url_for("project",project_id=new_project.id))
-    return render_template('projects/add_project.html', name=name)
+    return render_template('projects/add_project.html', title='Add Project',name=name, submit_url=url_for("add_project"))
 
 @app.route('/project/<int:project_id>/milestone/new', methods=['POST','GET'])
 @login_required
@@ -950,11 +958,12 @@ def edit_project(project_id):
                 project.target_date = None
             db.session.commit()
             flash('Project updated successfully',"success")
-            return redirect(url_for("project",project_id=project_id))
+            # return redirect(url_for("project",project_id=project_id))
+            return redirect(url_for("projects"))
         except:
             db.session.rollback()
             flash("Something went wrong", "error")
-    return render_template('projects/edit_project.html',name=name,project=project)
+    return render_template('projects/add_project.html', title="Edit Project",name=name,project=project, submit_url=url_for("edit_project",project_id=project_id))
 
 @app.route('/milestone/<int:milestone_id>/edit', methods=['POST','GET'])
 @login_required
@@ -979,23 +988,24 @@ def edit_milestone(milestone_id):
     return render_template('edit_milestone',name=name,milestone=milestone)
 
 #!#! Need HX-Request proccess
-@app.route('/project/<int:project_id>/delete')
+@app.route('/project/<int:project_id>/delete', methods=['DELETE'])
 @login_required
 def delete_project(project_id):
     try:
         project = Project.query.filter_by(user_id=session['user_id'],id=project_id).first_or_404()
         db.session.delete(project)
         db.session.commit()
-        remaining = Project.query.filter_by(user_id=session['user_id'])
+        remaining = Project.query.filter_by(user_id=session['user_id']).count()
         if request.headers.get('HX-Request'):
             if remaining==0:
-                return '''<main class="content" id="projects-container" hx-swap-oob="true"><div class="no-projects-message">
-                        <svg xmlns="http://www.w3.org/2000/svg" height="48px" viewBox="0 -960 960 960" width="48px" fill="#000000"><path d="M330-120 120-330v-300l210-210h300l210 210v300L630-120H330Zm27-195 123-123 123 123 42-42-123-123 123-123-42-42-123 123-123-123-42 42 123 123-123 123 42 42Zm-2 135h250l175-175v-250L605-780H355L180-605v250l175 175Zm125-300Z"/></svg>
+                return f'''<main class="content" id="projects-container" hx-swap-oob="true"><div class="no-projects-message">
+                        <svg xmlns="http://www.w3.org/2000/svg" height="100px" viewBox="0 -960 960 960" width="100px" fill="#000000"><path d="M330-120 120-330v-300l210-210h300l210 210v300L630-120H330Zm27-195 123-123 123 123 42-42-123-123 123-123-42-42-123 123-123-123-42 42 123 123-123 123 42 42Zm-2 135h250l175-175v-250L605-780H355L180-605v250l175 175Zm125-300Z"/></svg>
                         <h2>No Projects</h2>
-                        <button type="button" class="btn btn-info">Add a project</button>
+                        <a href="{ url_for('add_project') }" class="btn btn-info add_project"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M440-120v-320H120v-80h320v-320h80v320h320v80H520v320h-80Z"/></svg><span>Add a project</span></a>
                         </div></main>''', 200
             return "",200
-    except:
+    except Exception as r:
+        print(f"Error ========={r}")
         db.session.rollback()
         if request.headers.get("HX-Request"):
             return "",400

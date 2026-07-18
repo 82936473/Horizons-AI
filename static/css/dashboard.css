@@ -60,6 +60,7 @@
 .card-header p{
     margin:8px 0;
     font-size:16px;
+    word-break: break-all;
 }
 
 
@@ -173,8 +174,8 @@
 }
 
  svg{
-    width:24px;
-    height:24px;
+    /* width:24px;
+    height:24px; */
     flex-shrink: 0;
     fill:currentColor;
 }
@@ -408,4 +409,38 @@
 
 #tasks-container:has(.task-card) .no-tasks-message {
     display: none;
+}
+.no-tasks-message {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 70vh;
+    gap: 10px;
+}
+.add_task{
+    color:white;
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap:8px;
+    overflow: hidden;
+    width: 50px;
+    box-sizing: border-box;
+    transition: 0.1s;
+    white-space: nowrap;
+}
+.add_task:hover {
+    width: 150px; 
+}
+.add_task span {
+    opacity: 0;
+    margin-left: 8px;
+}
+
+.add_task:hover span {
+    opacity: 1;
+}
+.add_task svg {
+    flex-shrink: 0;
 }

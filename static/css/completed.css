@@ -183,3 +183,11 @@
     transform: scale(0.9) translateY(10px);
     transition: opacity 200ms ease-out, transform 200ms ease-out;
 }
+.no-tasks-message {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 70vh;
+    gap: 10px;
+}

@@ -139,7 +139,11 @@
                         </ul>
                     {% endfor %}
         {% else %}
-                <h2 class="no-tasks-message" style="text-align: center;">No active tasks.</h2>
+            <div class="no-tasks-message">
+                <svg xmlns="http://www.w3.org/2000/svg" height="100px" viewBox="0 -960 960 960" width="100px" fill="#000000"><path d="M330-120 120-330v-300l210-210h300l210 210v300L630-120H330Zm27-195 123-123 123 123 42-42-123-123 123-123-42-42-123 123-123-123-42 42 123 123-123 123 42 42Zm-2 135h250l175-175v-250L605-780H355L180-605v250l175 175Zm125-300Z"/></svg>
+                <h1>No active tasks.</h1>
+                <a href="{{ url_for('add_task') }}" class="btn btn-info add_task"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#FFFFFF"><path d="M440-120v-320H120v-80h320v-320h80v320h320v80H520v320h-80Z"/></svg><span>Add Task</span></a>
+            </div>
         {% endif %} 
     </main>
 

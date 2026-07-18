@@ -5,34 +5,64 @@
 .content{
     flex:1;
     margin-top: 30px;
-    padding:30px;
+    padding-left: clamp(0vw, 6vw, 200px);
+    padding-right: clamp(1px, 6vw, 200px);
     display:flex;
     flex-direction: column;
     align-items: stretch;
 }
 .header{
-    width:90%;
+    width:100%;
     max-width:1200px;
-    margin: 0 auto;
+    margin: 23px auto 10px auto;
     transition:0.1s;
     display:flex;
-    justify-content: space-between;
+    gap:40px;
+    padding:5px 0;
     align-items: center;
+    box-sizing: boorder-box;
+}
+.add_project{
+    color:black;
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap:8px;
+    overflow: hidden;
+    width: 50px;
+    box-sizing: border-box;
+    transition: 0.1s;
+    white-space: nowrap;
+}
+.add_project:hover {
+    width: 200px; 
+}
+.add_project span {
+    color:black;
+    opacity: 0;
+    margin-left: 8px;
+}
+
+.add_project:hover span {
+    opacity: 1;
+}
+.add_project svg {
+    flex-shrink: 0;
 }
 .projects-cards {
     width:100%;
     max-width: 1200px;
-    margin: 30px auto 0 auto;
+    margin: 0 auto;
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
-    align-items: center;
+    align-items: stretch;
     justify-content: flex-start;
     gap: 20px;
 }
 .project-card{
-    width: 100%;
-    width:300px;
+    flex:1 1 250px;
+    max-width: 290px;
     font-family: 'Plus Jakarta Sans', sans-serif;
     border-radius:19px;
     padding:15px 15px;
@@ -41,6 +71,11 @@
     display:block;   
     box-sizing:border-box;
     transition:opacity 200ms ease-out,transform 200ms ease-out;
+}
+.project-card.htmx-swapping {
+    opacity: 0;
+    transform: scale(0.9) translateY(200px);
+    transition: opacity 500ms ease-out, transform 500ms ease-out;
 }
 .project-card:hover{
     transform: translateY(-8px);
@@ -90,12 +125,22 @@
 .dropdown-content a:hover {
     background-color: #3d3d3d;
 }
- svg{
+.project-card svg{
     margin-right:12px;
     width:24px;
     height:24px;
     flex-shrink: 0;
     fill:currentColor;
+}
+.title{
+    font-weight: bold;
+    margin:8px 0;
+    font-size:16px;
+    word-break: break-all;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    
 }
 .card-content{
     display:flex;
@@ -122,20 +167,20 @@
   overflow: hidden;
 }
 .progress-bar-fill {
-  height: 100%;
-  background-color: #007bff;
-  border-radius: 4px;
-  transition: width 0.4s ease;
+    height: 100%;
+    background-color: #007bff;
+    border-radius: 4px;
+    transition: width 0.4s ease;
 }
 
 
 .no-projects-message {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  min-height: 70vh;
-  gap: 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 70vh;
+    gap: 10px;
 }
 .flash-container{
     position:fixed;
@@ -153,4 +198,21 @@
     border-radius:8px;
     animation:fadeOut 5s forwards;
     animation: slideInOut 5s ease forwards;
+}
+@keyframes slideInOut{
+    0%{
+        transform:translateX(120%);
+        opacity:0;
+    }
+    10%{
+        transform:translateX(0);
+        opacity:1;
+    }
+    85%{
+        transform:translateX(0);
+        opacity:1;
+    }
+    100%{
+        transform:translateX(120%);
+        opacity:0;}
 }

@@ -1,61 +1,99 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <style>
-      .color-options-grid {
-  display: flex;
-  gap: 12px;
-}
+{% extends "layout.html" %}
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/projects/add_project.css') }}">
 
-/* Hide the native checkbox circle */
-.color-circle-label input[type="radio"] {
-  display: none;
-}
+{% endblock head %}
+{% block content %}
+<div class="add-project">
+    {% block sidebar %} {{ super() }} {% endblock %}
+    <div class="content">
+      <h1>{{ title }}</h1>
+      {% if project %}
+        <form class="add-card {{ project.color }}" action="{{ submit_url }}" method="POST" id="project-card">
+            <label>Title</label>
+            <input type="text" name="title" placeholder="title" value="{{ project.title }}" required>
+            <label>Goal</label>
+            <input type="text" name="goal" placeholder="what's your goal from this project" value="{{ project.goal }}" required>
+            <label>Description</label>
+            <input type="text" name="description" placeholder="describe your project and how would you finish it" value="{{ project.description }}">
+            <label>Color</label>
+            <select id="color" name="color">
+              <option style="color:blue;" value="#3B82F6" {% if project.color == "#3B82F6" %}selected{% endif %}>🔵 Blue</option>
+              <option style="color:green;" value="#10B981" {% if project.color == "#10B981" %}selected{% endif %}>🟢 Green</option>
+              <option style="color:red;" value="#EF4444" {% if project.color == "#EF4444" %}selected{% endif %}>🔴 Red</option>
+              <option style="color:orange;" value="#F59E0B" {% if project.color == "#F59E0B" %}selected{% endif %}>🟡 Yellow</option>
+              <option style="color:purple;" value="#8B5CF6" {% if project.color == "#8B5CF6" %}selected{% endif %}>🟣Purple</option>
+            </select>
+            <label>Taret date</label>
+            <input type="date" name="target_day" value="{{ project.target_date }}">
+            <button type="submit">Add Project</button>
+        </form>
+      {% else %}
+        <form class="add-card blue" action="{{ submit_url }}" method="POST" id="project-card">
+            <label>Title</label>
+            <input type="text" name="title" placeholder="title" required>
+            <label>Goal</label>
+            <input type="text" name="goal" placeholder="what's your goal from this project" required>
+            <label>Description</label>
+            <input type="text" name="description" placeholder="describe your project and how would you finish it">
+            <label>Color</label>
+            <select id="color" name="color">
+              <option style="color:blue;" value="#3B82F6" selected>🔵 Blue (Default)</option>
+              <option style="color:green;" value="#10B981">🟢 Green</option>
+              <option style="color:red;" value="#EF4444">🔴 Red</option>
+              <option style="color:orange;" value="#F59E0B">🟡 Yellow</option>
+              <option style="color:purple;" value="#8B5CF6">🟣Purple</option>
+            </select>
+            <label>Taret date</label>
+            <input type="date" name="target_day" >
+            <button type="submit">Add Project</button>
+        </form>
+      {% endif %}
 
-/* Base style for the custom color circle */
-.color-circle {
-  display: block;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  cursor: pointer;
-  border: 2px solid transparent;
-  transition: transform 0.15s ease, border-color 0.15s ease;
-}
-
-/* Zoom slightly when hovering over a circle */
-.color-circle:hover {
-  transform: scale(1.1);
-}
-
-/* Give the active selection a highlighted outer ring */
-.color-circle-label input[type="radio"]:checked + .color-circle {
-  border-color: #ffffff; /* White ring around active choice */
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.4);
-  transform: scale(1.1);
-}
-    </style>
-</head>
-<body>
-  <form action="{{ url_for('add_project') }}" method="POST">
-    <input type="text" name="title" placeholder="title" required>
-    <input type="text" name="description" placeholder="description" required>
-    <input type="text" name="goal" placeholder="goal" required>
-    <div class="mb-3">
-      <label for="projectColor" class="form-label text-light">Project Color</label>
-      <select class="form-select bg-dark text-white border-secondary" id="projectColor" name="color">
-        <option value="#3B82F6" selected>Blue (Default)</option>
-        <option value="#10B981">Green</option>
-        <option value="#EF4444">Red</option>
-        <option value="#F59E0B">Yellow</option>
-        <option value="#8B5CF6">Purple</option>
-      </select>
     </div>
-    <input type="date" name="target_day">
-<input name="submit" type="submit">
-</form>
-</body>
-</html>
+</div>
+
+<script>
+
+const priority = document.getElementById("color");
+const card = document.getElementById("project-card");
+const secondclass = card.classList[1]
+if (secondclass == "#3B82F6"){
+  card.classList.replace(secondclass, "blue")
+}
+if (secondclass == "#10B981"){
+  card.classList.replace(secondclass, "green")
+}
+if (secondclass == "#EF4444"){
+  card.classList.replace(secondclass, "red")
+}
+if (secondclass == "#F59E0B"){
+  card.classList.replace(secondclass, "yellow")
+}
+if (secondclass == "#8B5CF6"){
+  card.classList.replace(secondclass, "purple")
+}
+priority.addEventListener("change", function(){
+
+  card.classList.remove("blue", "green", "red", "yellow", "purple");
+
+    if(priority.value === "#3B82F6"){
+        card.classList.add("blue");
+    }
+    else if(priority.value === "#10B981"){
+        card.classList.add("green");
+    }
+    else if(priority.value === "#EF4444"){
+        card.classList.add("red");
+    }
+    else if(priority.value === "#F59E0B"){
+        card.classList.add("yellow");
+    }
+    else if(priority.value === "#8B5CF6"){
+        card.classList.add("purple");
+    }
+    
+});
+
+</script>
+{% endblock content %}
