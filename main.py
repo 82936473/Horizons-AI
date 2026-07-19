@@ -269,7 +269,8 @@ def dashboard():
         session.clear()
         return redirect(url_for("log_in"))
     name=session['name']
-    query = Task.query.filter_by(user_id=session["user_id"])
+    query = Task.query.filter_by(user_id=session["user_id"], milestone_id=None)
+    print(f"============{query.count()}")
     if sort == "priority":
         query = query.order_by(case((Task.priority == "High", 1),(Task.priority == "Medium", 2),(Task.priority == "Low", 3),))
     elif sort == "name":
@@ -277,6 +278,8 @@ def dashboard():
     else:
         query = query.order_by(Task.due_date)
     tasks = query.all()
+    for  i in  tasks:
+        print(f"============={i.milestone_id}")
     return render_template("dashboard.html",title="Dashboard",tasks=tasks,status="dashboard",name=name)
 @app.route("/add", methods=["GET", "POST"])
 @login_required
@@ -843,7 +846,7 @@ def projects():
         name = session['name']
         projects = Project.query.filter_by(user_id=session['user_id']).all()
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"Error:9 {e}")
     return render_template("projects/projects.html", projects=projects, name=name, title="Projects")
         
 @app.route('/project/<int:project_id>')
@@ -882,7 +885,11 @@ def add_project():
             else:
                 target_date = None
             new_project = Project(user_id=session['user_id'],title=title, description=description, color=color, goal=goal)
+            # new_milestone = Milestone(user_id=session['user_id'], project=new_project, title="Milestone 1", description="description here")
+            # new_task = Task(user_id=session['user_id'],milestone=new_milestone,title="test title")  #!#! remove before use
             db.session.add(new_project)
+            # db.session.add(new_milestone)
+            # db.session.add(new_task) #!#! remove before use
             db.session.commit()
             flash("Project added successfully","success")
         except Exception as d:
@@ -958,8 +965,8 @@ def edit_project(project_id):
                 project.target_date = None
             db.session.commit()
             flash('Project updated successfully',"success")
-            # return redirect(url_for("project",project_id=project_id))
-            return redirect(url_for("projects"))
+            return redirect(url_for("project",project_id=project_id))
+            # return redirect(url_for("projects"))
         except:
             db.session.rollback()
             flash("Something went wrong", "error")

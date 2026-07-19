@@ -18,7 +18,7 @@ class Task(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer,db.ForeignKey("user.id"),nullable=False)
     title = db.Column(db.String(300),nullable=False)
-    priority = db.Column(db.String(10),nullable=False)
+    priority = db.Column(db.String(10),nullable=True)
     category = db.Column(db.String(50), default=None)
     due_date = db.Column(db.Date,nullable=True)
     @property
@@ -31,7 +31,7 @@ class Task(db.Model):
         elif self.due_date == today - timedelta(days=1):
             return "Yesterday"
         return self.due_date.strftime("%d-%m-%Y")
-    evaluate = db.Column(db.Boolean, default=False, nullable=False)
+    evaluate = db.Column(db.Boolean, default=False)
     subtasks = db.relationship('SubTask', backref='parent_task', lazy=True, cascade="all, delete-orphan")
     milestone_id = db.Column(db.Integer, db.ForeignKey("milestone.id"), nullable=True)
     created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
@@ -99,9 +99,11 @@ class Project(db.Model):
         elif self.updated_at == today - timedelta(days=1):
             return "Yesterday"
         return self.updated_at.strftime("%d-%m-%Y")
+    milestones = db.relationship('Milestone', backref='project', lazy=True, cascade="all, delete-orphan")
     completed_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 class Milestone(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer,db.ForeignKey("user.id"),nullable=False)
     project_id = db.Column(db.Integer, db.ForeignKey("project.id"), nullable=False)
     title = db.Column(db.String(300), nullable=False)
     description = db.Column(db.Text)

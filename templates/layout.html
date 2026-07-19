@@ -60,7 +60,18 @@
                 if (window.matchMedia("(hover: none)").matches) {if (button && sidebar) {button.addEventListener("click", () => {sidebar.classList.toggle("open");});}}});
             </script>
         {% endblock sidebar %}
-        {% block flashscript %}
+        {% block flash %}
+        <div class="flash-container" id="flash-container">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div style="color:black;" class="flash {{ category }}">
+                            <button type="button" class="btn btn-primary">{{message}}</button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
         <script>
         document.body.addEventListener("htmx:afterRequest", function (event) {
         const url = event.detail.pathInfo.requestPath;
@@ -100,7 +111,7 @@
         });
         </script>
         
-        {% endblock flashscript %}
+        {% endblock flash %}
     {% endblock content%}
 </body>
 </html>
