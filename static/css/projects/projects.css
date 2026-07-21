@@ -35,7 +35,7 @@
     white-space: nowrap;
 }
 .add_project:hover {
-    width: 200px; 
+    width: 190px; 
 }
 .add_project span {
     color:black;
@@ -71,6 +71,7 @@
     display:block;   
     box-sizing:border-box;
     transition:opacity 200ms ease-out,transform 200ms ease-out;
+    cursor:pointer;
 }
 .project-card.htmx-swapping {
     opacity: 0;

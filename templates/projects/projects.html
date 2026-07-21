@@ -14,7 +14,7 @@
             </div>
             <div  class="projects-cards">
             {% for project in projects %}
-                <div class="project-card" id="project-{{ project.id }}" style="border:1px solid {{ project.color }};border-top: 4px solid {{ project.color }};">
+                <div data-url="{{ url_for('project', project_id=project.id) }}" class="project-card" id="project-{{ project.id }}" style="border:1px solid {{ project.color }};border-top: 4px solid {{ project.color }};">
                     <div class="card-header">
                         <span class="title">{{ project.title }}</span>
                         <div style="display: flex; flex-direction: row; gap:5px;"> 
@@ -69,66 +69,41 @@
     </main>
 </div>
 <script>
-    document.addEventListener("click", function (event) {
-    // Check if the clicked element (or its closest parent) is a menu button
-    const button = event.target.closest(".menuu");
-    
-    if (button) {
-        // Prevent the click from bubbling out
+document.querySelectorAll('.menuu').forEach(button => {
+    button.addEventListener('click', function(event) {
+        // Stop the click from bubbling up to the .project-card redirect
         event.stopPropagation();
-        
-        const menuu = button.nextElementSibling;
-        
-        document.querySelectorAll(".dropdown-content").forEach(m => {
-            if (m !== menuu) {
-                m.style.display = "none";
-            }
-        });
 
-        if (menuu.style.display === "block") {
-            menuu.style.display = "none";
-        } else {
-            menuu.style.display = "block";
-        }
-    } else {
-        // If the user clicks anywhere else on the screen, hide all dropdowns
-        document.querySelectorAll(".dropdown-content").forEach(menuu => {
-            menuu.style.display = "none";
-        });
-    }
-});
-buttons.forEach(button => {
-
-    button.addEventListener("click", function (event) {
-
-        // Prevent the click from reaching the document
-        event.stopPropagation();
+        const currentMenu = this.nextElementSibling;
 
         // Close all other dropdowns
-        document.querySelectorAll(".dropdown-content").forEach(menuu => {
-            if (menuu !== this.nextElementSibling) {
-                menuu.style.display = "none";
+        document.querySelectorAll(".dropdown-content").forEach(menu => {
+            if (menu !== currentMenu) {
+                menu.style.display = "none";
             }
         });
 
-        // Toggle this dropdown
-        const menuu = this.nextElementSibling;
-
-        if (menuu.style.display === "block")
-            menuu.style.display = "none";
-        else
-            menuu.style.display = "block";
-
+        // Toggle the current dropdown
+        if (currentMenu.style.display === "block") {
+            currentMenu.style.display = "none";
+        } else {
+            currentMenu.style.display = "block";
+        }
     });
-
 });
 
+// 2. Global click listener to close dropdowns when clicking outside
 document.addEventListener("click", function () {
-
-    document.querySelectorAll(".dropdown-content").forEach(menuu => {
-        menuu.style.display = "none";
+    document.querySelectorAll(".dropdown-content").forEach(menu => {
+        menu.style.display = "none";
     });
+});
 
+// 3. Project card redirection
+document.querySelectorAll('.project-card').forEach(card => {
+    card.addEventListener('click', function() {
+        window.location = this.dataset.url;
+    });
 });
 </script>
 {% endblock content %}

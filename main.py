@@ -270,7 +270,6 @@ def dashboard():
         return redirect(url_for("log_in"))
     name=session['name']
     query = Task.query.filter_by(user_id=session["user_id"], milestone_id=None)
-    print(f"============{query.count()}")
     if sort == "priority":
         query = query.order_by(case((Task.priority == "High", 1),(Task.priority == "Medium", 2),(Task.priority == "Low", 3),))
     elif sort == "name":
@@ -281,7 +280,7 @@ def dashboard():
     for  i in  tasks:
         print(f"============={i.milestone_id}")
     return render_template("dashboard.html",title="Dashboard",tasks=tasks,status="dashboard",name=name)
-@app.route("/add", methods=["GET", "POST"])
+@app.route("/task/new", methods=['GET','POST'])
 @login_required
 def add_task():
     name=session['name']
@@ -885,67 +884,53 @@ def add_project():
             else:
                 target_date = None
             new_project = Project(user_id=session['user_id'],title=title, description=description, color=color, goal=goal)
-            # new_milestone = Milestone(user_id=session['user_id'], project=new_project, title="Milestone 1", description="description here")
-            # new_task = Task(user_id=session['user_id'],milestone=new_milestone,title="test title")  #!#! remove before use
             db.session.add(new_project)
-            # db.session.add(new_milestone)
-            # db.session.add(new_task) #!#! remove before use
             db.session.commit()
             flash("Project added successfully","success")
         except Exception as d:
             print(f"======={d}")
             db.session.rollback()
             flash("Something went wrong","error")
-        return redirect(url_for("projects"))
-        # return redirect(url_for("project",project_id=new_project.id))
+        return redirect(url_for("project",project_id=new_project.id))
     return render_template('projects/add_project.html', title='Add Project',name=name, submit_url=url_for("add_project"))
 
-@app.route('/project/<int:project_id>/milestone/new', methods=['POST','GET'])
+@app.route('/project/<int:project_id>/milestone/new', methods=['POST'])
 @login_required
 def add_milestone(project_id):
-    name = session['name']
-    if request.method == 'POST':
-        try:
-            title = request.form['title']
-            description = request.form['description']
-            target_date = request.form['target_date']
-            if target_date :
-                target_date = date.fromisoformat(target_date)
-            else:
-                target_date = None
-            new_milestone = Milestone(user_id=session['user_id'],project_id=project_id,title=title,description=description,target_date=target_date)
-            db.session.add(new_milestone)
-            db.session.commit()
-            flash("New Milestone added successfully",'success')
-            return redirect(url_for('project',project_id=project_id))
-        except:
-            flash("Something went wrong","error")
-            db.session.rollback()
-    return render_template('projects/add_milestone.html')
+    try:
+        title = request.form['title']
+        new_milestone = Milestone(user_id=session['user_id'],project_id=project_id, title=title)
+        db.session.add(new_milestone)
+        db.session.commit()
+        html_response = ''
+        html_response += f'''<div class="milestone-container"> <div class="milestone-header"> <span>{ title }</span> <button class="toggle-arrow collapsed" onclick="toggletasks(this)"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M480-528 296-344l-56-56 240-240 240 240-56 56-184-184Z"/></svg></button></div>'''
+        html_response += f'''<div class="progress-container"> <div class="progress-label"> <strong>progress: </strong> <span>0.0%</span> </div> <div class="progress-bar-bg"> <div class="progress-bar-fill" style="width: 0%;"></div></div></div>'''
+        html_response += f'''<ul class="tasks-tree hide-tasks" id="tasks-{new_milestone.id}">
+                                <a onclick="toggleTaskForm({new_milestone.id})"><svg xmlns="http://www.w3.org/2000/svg" height="18px" viewBox="0 -960 960 960" width="18px" fill="#00000"><path d="M440-120v-320H120v-80h320v-320h80v320h320v80H520v320h-80Z"/></svg></a>
+                                <div class="add-section" id="task-form-{ new_milestone.id }">
+                                    <form hx-post="{ url_for('add_milestone_task', milestone_id=new_milestone.id) }" hx-target="#tasks-{ new_milestone.id }" hx-swap="beforeend" hx-on::after-request="this.reset(); this.parentElement.style.display='none'">
+                                        <input type="text" name="task" required>
+                                        <button type="submit"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z"/></svg></button>
+                                    </form>
+                                </div></ul>'''
+        return html_response,200
+    except Exception as e:
+        db.session.rollback()
+        print(e)
+        return "",404
 
-@app.route('/milestone/<int:milestone_id>/task/new', methods=['POST','GET'])
+@app.route('/milestone/<int:milestone_id>/task/new', methods=['POST'])
 @login_required
 def add_milestone_task(milestone_id):
-    name = session['name']
-    if request.method == 'POST':
-        try:
-            task = request.form['task']
-            priority = request.form['priority']
-            category = request.form['category']
-            due_date = request.form['due_date']
-            if due_date:
-                due_date = date.fromisoformat(due_date)
-            else:
-                due_date = None
-            new_task = Task(user_id=session['user_id'], milestone_id=milestone_id,title=task, priority=priority,category=category)
-            db.session.add(new_task)
-            db.session.commit()
-            flash("Task added successfully")
-            return redirect(url_for('milestone',milestone_id=milestone_id))
-        except:
-            db.session.rollback()
-            flash("Something went wrong", "error")
-    return render_template('projects/add_milestone_task.html',name=name)
+    try:
+        task = request.form['task']
+        new_task = Task(user_id=session['user_id'], milestone_id=milestone_id, title=task)
+        db.session.add(new_task)
+        db.session.commit()
+        return f'''<li class="task"> <input type="checkbox" name="anyo" value="{ new_task.id }"> {task} </li>''',200
+    except:
+        db.session.rollback()
+        return "",404
 
 @app.route('/project/<int:project_id>/edit', methods=['POST','GET'])
 @login_required
@@ -995,7 +980,7 @@ def edit_milestone(milestone_id):
     return render_template('edit_milestone',name=name,milestone=milestone)
 
 #!#! Need HX-Request proccess
-@app.route('/project/<int:project_id>/delete', methods=['DELETE'])
+@app.route('/project/<int:project_id>/delete', methods=['DELETE','GET'])
 @login_required
 def delete_project(project_id):
     try:
@@ -1003,6 +988,7 @@ def delete_project(project_id):
         db.session.delete(project)
         db.session.commit()
         remaining = Project.query.filter_by(user_id=session['user_id']).count()
+        print('----------------- PASS')
         if request.headers.get('HX-Request'):
             if remaining==0:
                 return f'''<main class="content" id="projects-container" hx-swap-oob="true"><div class="no-projects-message">
@@ -1011,6 +997,7 @@ def delete_project(project_id):
                         <a href="{ url_for('add_project') }" class="btn btn-info add_project"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M440-120v-320H120v-80h320v-320h80v320h320v80H520v320h-80Z"/></svg><span>Add a project</span></a>
                         </div></main>''', 200
             return "",200
+        return redirect(url_for('projects'))
     except Exception as r:
         print(f"Error ========={r}")
         db.session.rollback()
