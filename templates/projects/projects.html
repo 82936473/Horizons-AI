@@ -92,6 +92,11 @@ document.querySelectorAll('.menuu').forEach(button => {
     });
 });
 
+document.querySelectorAll('.dropdown-content').forEach(menu => {
+    menu.addEventListener('click', function(event) {
+        event.stopPropagation();
+    });
+});
 // 2. Global click listener to close dropdowns when clicking outside
 document.addEventListener("click", function () {
     document.querySelectorAll(".dropdown-content").forEach(menu => {

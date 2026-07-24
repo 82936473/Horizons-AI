@@ -30,7 +30,7 @@
                 {% if project.description %}
                     <p class="decription"><strong>Description: </strong>{{ project.description }}</p>
                 {% endif %}
-                <div class="progress-container">
+                <div class="progress-container" id="project-progress-container-{{project.id}}">
                     <div class="progress-label">
                         <strong>progress: </strong>
                         <span>{{ project.progress }}%</span>
@@ -51,51 +51,77 @@
         {% if project.milestones %}
             <div class="milestones-container" id="milestones">
                 {% for milestone in project.milestones %}
-                    <div class="milestone-container">
+                    <div class="milestone-container" id="milestone-{{milestone.id}}">
                         <div class="milestone-header">
-                            <span>{{ milestone.title }}</span>
+                            <div class="title-wrapper">
+                                <div id="edit-milestone-title-{{milestone.id}}">
+                                    <span id="milestone-title-{{milestone.id}}">{{ milestone.title }}</span>
+                                    <form hx-post="{{ url_for('edit_milestone', milestone_id=milestone.id) }}" hx-tigger="change" hx-target="#edit-milestone-title-{{milestone.id}}" style="width: 600px;" class="add-section" id="milestone-title-form-{{milestone.id}}">
+                                        <input type="text" name="title" placeholder="{{milestone.title}}" required>
+                                        <button type="submit"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z"/></svg></button>
+                                        <button type="button" onclick="CancelEditTitle({{milestone.id}})"><svg xmlns="http://www.w3.org/2000/svg" height="27px" viewBox="0 -960 960 960" width="27px" fill="#000000"><path d="m336-280-56-56 144-144-144-143 56-56 144 144 143-144 56 56-144 143 144 144-56 56-143-144-144 144Z"/></svg></button>
+                                    </form>
+                                </div>
+                                <div class="dropdown">
+                                    <button class="menuu">⋮</button>
+                                    <div class="dropdown-content">
+                                        <a onclick="EditMilestoneTitle({{milestone.id}})" class=""><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z"/></svg><span>Edit Name</span></a>
+                                        <a hx-delete="{{ url_for('delete_milestone', milestone_id=milestone.id) }}" hx-target="#milestone-{{ milestone.id }}" hx-swap="delete swap:200ms"  hx-confirm="Please confirm the deleting?" class=""><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24"><path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360Z"/></svg><span>Delete</span></a>
+                                    </div>
+                                </div>
+                            </div>
                             <button class="toggle-arrow collapsed" onclick="toggletasks(this)"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M480-528 296-344l-56-56 240-240 240 240-56 56-184-184Z"/></svg></button>
                         </div>
-                        <div class="progress-container">
+                        <div class="progress-container" id="milestone-progress-container-{{milestone.id}}">
                             <div class="progress-label">
                                 <strong>progress: </strong>
                                 <span>{{ milestone.progress }}%</span>
                             </div>
                             <div class="progress-bar-bg">
-                                <div class="progress-bar-fill" style="width: {{ project.progress }}%;"></div>
+                                <div class="progress-bar-fill" style="width: {{ milestone.progress }}%; background-color: {{project.color}}"></div>
                             </div>
                         </div>
-                            <ul class="tasks-tree hide-tasks" id="tasks-{{milestone.id}}">
-                                {% for task in milestone.tasks %}
-                                <li class="task">
-                                    <input type="checkbox" name="{{ task.id }}" value="true" hx-post="#" hx-trigger="change" hx-target="#"> {{task.title}}
-                                </li>
-                                {% endfor %}
-                                <button style="cursor: pointer;" onclick="toggleTaskForm({{milestone.id}})"><svg xmlns="http://www.w3.org/2000/svg" height="18px" viewBox="0 -960 960 960" width="18px" fill="{{project.color}}"><path d="M440-120v-320H120v-80h320v-320h80v320h320v80H520v320h-80Z"/></svg></button>
-                                <div class="add-section" id="task-form-{{ milestone.id }}">
-                                    <form hx-post="{{ url_for('add_milestone_task', milestone_id=milestone.id) }}" hx-target="#tasks-{{ milestone.id }}" hx-swap="beforeend" hx-on::after-request="this.reset(); this.parentElement.style.display='none'">
-                                        <input type="text" name="task" required>
-                                        <button type="submit"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z"/></svg></button>
-                                    </form>
+                        <ul class="tasks-tree hide-tasks" id="tasks-{{milestone.id}}">
+                            <a class="btn btn-secondary add-task" onclick="toggleTaskForm({{milestone.id}})"><svg xmlns="http://www.w3.org/2000/svg" height="18px" viewBox="0 -960 960 960" width="18px" fill="#000000"><path d="M440-120v-320H120v-80h320v-320h80v320h320v80H520v320h-80Z"/></svg><span>New task</span></a>
+                            <div class="add-section" id="task-form-{{ milestone.id }}">
+                                <form hx-post="{{ url_for('add_milestone_task', milestone_id=milestone.id) }}" hx-target="#tasks-{{ milestone.id }}" hx-swap="beforeend" hx-on::after-request="this.reset(); this.parentElement.style.display='none'">
+                                    <input type="text" name="task" required>
+                                    <button type="submit"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z"/></svg></button>
+                                    <button type="button" onclick="CancelAddTask({{milestone.id}})"><svg xmlns="http://www.w3.org/2000/svg" height="27px" viewBox="0 -960 960 960" width="27px" fill="#000000"><path d="m336-280-56-56 144-144-144-143 56-56 144 144 143-144 56 56-144 143 144 144-56 56-143-144-144 144Z"/></svg></button>
+                                </form>
+                            </div>
+                            {% for task in milestone.tasks %}
+                            <li class="task" id="task-{{task.id}}">
+                                <div class="tasks-wrapper">
+                                {% if task.completed == False %}
+                                    <div><input type="checkbox" value="true" hx-post="{{url_for('check_task', milestone_id=milestone.id, task_id=task.id)}}" hx-trigger="change" hx-target="#task-{{task.id}}"><span>{{task.title}}</span></div>
+                                {% else %}
+                                    <div><input type="checkbox" value="true" hx-post="{{url_for('uncheck_task', milestone_id=milestone.id, task_id=task.id)}}" hx-trigger="change" hx-target="#task-{{task.id}}" checked><span>{{task.title}}</span></div>
+                                {% endif %}
+                                <button hx-delete="{{url_for('delete_milestone_task',task_id=task.id)}}" hx-target="#task-{{task.id}}" hx-swap="delete swap:200ms" hx-confirm="Are you sure you want to delete this task" class=""><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z"/></svg></button>                                    
                                 </div>
-                            </ul>
+                            </li>
+                            {% endfor %}
+                        </ul>
                     </div>
                 {% endfor %}
             </div>
-            <div class="add-section" id="milestone-form-{{ project.id }}">
+            <div style="margin:0 auto 20px" class="add-section" id="milestone-form-{{ project.id }}">
                 <form hx-post="{{ url_for('add_milestone', project_id=project.id) }}" hx-target="#milestones" hx-swap="beforeend" hx-on::after-request="this.reset(); this.parentElement.style.display='none'">
-                    <input type="text" name="title" required>
+                    <input style="width:300px;" type="text" name="title" required>
                     <button type="submit"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z"/></svg></button>
+                    <button type="button" onclick="CancelAddMilestone({{project.id}})"><svg xmlns="http://www.w3.org/2000/svg" height="27px" viewBox="0 -960 960 960" width="27px" fill="#000000"><path d="m336-280-56-56 144-144-144-143 56-56 144 144 143-144 56 56-144 143 144 144-56 56-143-144-144 144Z"/></svg></button>
                 </form>
             </div> 
             <a onclick="toggleMilestoneForm({{project.id}})" class="btn btn-info add_milestone"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M440-120v-320H120v-80h320v-320h80v320h320v80H520v320h-80Z"/></svg><span>Add a Milestone</span></a>
         {% else %}
         <div class="milestones-container" id="milestones">
         </div>
-        <div class="add-section" id="milestone-form-{{ project.id }}">
+        <div style="margin:0 auto 20px" class="add-section" id="milestone-form-{{ project.id }}">
             <form hx-post="{{ url_for('add_milestone', project_id=project.id) }}" hx-target="#milestones" hx-swap="beforeend" hx-on::after-request="this.reset(); this.parentElement.style.display='none'">
-                <input type="text" name="title" required>
+                <input style="width: 300px;" type="text" name="title" required>
                 <button type="submit"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z"/></svg></button>
+                <button type="button" onclick="CancelAddMilestone({{project.id}})"><svg xmlns="http://www.w3.org/2000/svg" height="27px" viewBox="0 -960 960 960" width="27px" fill="#000000"><path d="m336-280-56-56 144-144-144-143 56-56 144 144 143-144 56 56-144 143 144 144-56 56-143-144-144 144Z"/></svg></button>
             </form>
         </div> 
         <a onclick="toggleMilestoneForm({{project.id}})" class="btn btn-info add_milestone"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M440-120v-320H120v-80h320v-320h80v320h320v80H520v320h-80Z"/></svg><span>Add a Milestone</span></a>
@@ -133,7 +159,6 @@ _____
  -->
 
 
-
 <script>
 document.addEventListener("click", function (event) {
 // Check if the clicked element (or its closest parent) is a menu button
@@ -163,13 +188,6 @@ if (button) {
     });
 }
 });
-document.addEventListener("click", function () {
-
-    document.querySelectorAll(".dropdown-content").forEach(menuu => {
-        menuu.style.display = "none";
-    });
-
-});
 function toggletasks(button) {
     const parentCard = button.closest('.milestone-container');
     const tasksTree = parentCard.querySelector('.tasks-tree');
@@ -181,13 +199,40 @@ function toggletasks(button) {
 
 function toggleTaskForm(id) {
     const el = document.getElementById(`task-form-${id}`);
-    el.style.display =
-        el.style.display === "none" ? "block" : "none";
+    el.style.display = (el.style.display === "none" || el.style.display === "") ? "block" : "none";
 }
+
 function toggleMilestoneForm(id) {
     const el = document.getElementById(`milestone-form-${id}`);
-    el.style.display =
-        el.style.display === "none" ? "block" : "none";
+    el.style.display = (el.style.display === "none" || el.style.display === "") ? "block" : "none";
+}
+function CancelEditTitle(id) {
+    const el = document.getElementById(`milestone-title-form-${id}`)
+    el.reset()
+    const span = document.getElementById(`milestone-title-${id}`)
+    el.style.display = (el.style.display === "") ? "" : "none";
+    span.style.display = (span.style.display === "none") ? "block" : "none";
+}
+
+function CancelAddTask(id) {
+    const el = document.getElementById(`task-form-${id}`);
+    const form = el.querySelector('form')
+    form.reset()
+    el.style.display = (el.style.display === "none" || el.style.display === "") ? "block" : "none";
+}
+
+function CancelAddMilestone(id) {
+    const el = document.getElementById(`milestone-form-${id}`);
+    const form = el.querySelector('form')
+    form.reset()
+    el.style.display = (el.style.display === "none" || el.style.display === "") ? "block" : "none";
+}
+
+function EditMilestoneTitle(id) {
+    const el = document.getElementById(`milestone-title-form-${id}`);
+    const span = document.getElementById(`milestone-title-${id}`)
+    el.style.display = (el.style.display === "none" || el.style.display === "") ? "block" : "none";
+    span.style.display = (span.style.display === "block" || span.style.display === "") ? "none" : "block";
 }
 
 </script>

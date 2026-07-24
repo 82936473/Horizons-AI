@@ -92,6 +92,15 @@
         if (url.startsWith("/complete_subtask/")) {
             showFlash("SubTask Completed!");
         }
+        if (url.startsWith("/milestone/") && url.endsWith("/edit")) {
+            showFlash("Title updated!");
+        }
+        if (url.startsWith("/milestone/task/") && url.endsWith("/delete")) {
+            return
+        }
+        if (url.startsWith("/milestone/") && url.endsWith("/delete")) {
+            showFlash("Milestone deleted successfully")
+        }
 
         function showFlash(message) {
             const container = document.getElementById("flash-container");

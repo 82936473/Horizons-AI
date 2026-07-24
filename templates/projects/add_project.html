@@ -21,7 +21,7 @@
               <option style="color:blue;" value="#3B82F6" {% if project.color == "#3B82F6" %}selected{% endif %}>🔵 Blue</option>
               <option style="color:green;" value="#10B981" {% if project.color == "#10B981" %}selected{% endif %}>🟢 Green</option>
               <option style="color:red;" value="#EF4444" {% if project.color == "#EF4444" %}selected{% endif %}>🔴 Red</option>
-              <option style="color:orange;" value="#F59E0B" {% if project.color == "#F59E0B" %}selected{% endif %}>🟡 Yellow</option>
+              <option style="color:orange;" value="#ff6c00" {% if project.color == "#ff6c00" %}selected{% endif %}>🟠 orange</option>
               <option style="color:purple;" value="#8B5CF6" {% if project.color == "#8B5CF6" %}selected{% endif %}>🟣Purple</option>
             </select>
             <label>Taret date</label>
@@ -41,7 +41,7 @@
               <option style="color:blue;" value="#3B82F6" selected>🔵 Blue (Default)</option>
               <option style="color:green;" value="#10B981">🟢 Green</option>
               <option style="color:red;" value="#EF4444">🔴 Red</option>
-              <option style="color:orange;" value="#F59E0B">🟡 Yellow</option>
+              <option style="color:orange;" value="#ff6c00">🟠 orange</option>
               <option style="color:purple;" value="#8B5CF6">🟣Purple</option>
             </select>
             <label>Taret date</label>
@@ -51,6 +51,7 @@
       {% endif %}
 
     </div>
+    <span style="color:rgb(0, 0, 0)">
 </div>
 
 <script>
@@ -67,15 +68,15 @@ if (secondclass == "#10B981"){
 if (secondclass == "#EF4444"){
   card.classList.replace(secondclass, "red")
 }
-if (secondclass == "#F59E0B"){
-  card.classList.replace(secondclass, "yellow")
+if (secondclass == "#ff6c00"){
+  card.classList.replace(secondclass, "orange")
 }
 if (secondclass == "#8B5CF6"){
   card.classList.replace(secondclass, "purple")
 }
 priority.addEventListener("change", function(){
 
-  card.classList.remove("blue", "green", "red", "yellow", "purple");
+  card.classList.remove("blue", "green", "red", "orange", "purple");
 
     if(priority.value === "#3B82F6"){
         card.classList.add("blue");
@@ -86,8 +87,8 @@ priority.addEventListener("change", function(){
     else if(priority.value === "#EF4444"){
         card.classList.add("red");
     }
-    else if(priority.value === "#F59E0B"){
-        card.classList.add("yellow");
+    else if(priority.value === "#ff6c00"){
+        card.classList.add("orange");
     }
     else if(priority.value === "#8B5CF6"){
         card.classList.add("purple");

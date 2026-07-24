@@ -903,14 +903,27 @@ def add_milestone(project_id):
         db.session.add(new_milestone)
         db.session.commit()
         html_response = ''
-        html_response += f'''<div class="milestone-container"> <div class="milestone-header"> <span>{ title }</span> <button class="toggle-arrow collapsed" onclick="toggletasks(this)"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M480-528 296-344l-56-56 240-240 240 240-56 56-184-184Z"/></svg></button></div>'''
-        html_response += f'''<div class="progress-container"> <div class="progress-label"> <strong>progress: </strong> <span>0.0%</span> </div> <div class="progress-bar-bg"> <div class="progress-bar-fill" style="width: 0%;"></div></div></div>'''
+        html_response += f'''<div class="milestone-container" id="milestone-{new_milestone.id}"> <div class="milestone-header"> <div class="title-wrapper"> <span>{ title }</span> <div class="dropdown">
+                                <button class="menuu">⋮</button>
+                                <div class="dropdown-content">
+                                    <a href="{ url_for('edit_project', project_id=project_id) }"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z"/></svg><span>Edit</span></a>
+                                    <a hx-delete="{ url_for('delete_milestone', milestone_id=new_milestone.id) }" hx-target="#milestone-{ new_milestone.id }" hx-swap="delete swap:200ms"  hx-confirm="Please confirm the deleting?" class=""><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24"><path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360Z"/></svg><span>Delete</span></a>
+                                </div>
+                            </div></div> <button class="toggle-arrow collapsed" onclick="toggletasks(this)"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M480-528 296-344l-56-56 240-240 240 240-56 56-184-184Z"/></svg></button></div>'''
+        html_response += f'''<div class="progress-container" id="milestone-progress-container-{new_milestone.id}"> <div class="progress-label"> <strong>progress: </strong> <span>0.0%</span> </div> <div class="progress-bar-bg"> <div class="progress-bar-fill" style="width: 0%;"></div></div></div>'''
         html_response += f'''<ul class="tasks-tree hide-tasks" id="tasks-{new_milestone.id}">
-                                <a onclick="toggleTaskForm({new_milestone.id})"><svg xmlns="http://www.w3.org/2000/svg" height="18px" viewBox="0 -960 960 960" width="18px" fill="#00000"><path d="M440-120v-320H120v-80h320v-320h80v320h320v80H520v320h-80Z"/></svg></a>
+                                <a class="btn btn-secondary add-task" onclick="toggleTaskForm({new_milestone.id})"><svg xmlns="http://www.w3.org/2000/svg" height="18px" viewBox="0 -960 960 960" width="18px" fill="#000000"><path d="M440-120v-320H120v-80h320v-320h80v320h320v80H520v320h-80Z"/></svg><span>New task</span></a>
                                 <div class="add-section" id="task-form-{ new_milestone.id }">
                                     <form hx-post="{ url_for('add_milestone_task', milestone_id=new_milestone.id) }" hx-target="#tasks-{ new_milestone.id }" hx-swap="beforeend" hx-on::after-request="this.reset(); this.parentElement.style.display='none'">
                                         <input type="text" name="task" required>
                                         <button type="submit"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z"/></svg></button>
+                                        <button type="button" onclick="CancelAddTask({new_milestone.id})"><svg xmlns="http://www.w3.org/2000/svg" height="27px" viewBox="0 -960 960 960" width="27px" fill="#000000"><path d="m336-280-56-56 144-144-144-143 56-56 144 144 143-144 56 56-144 143 144 144-56 56-143-144-144 144Z"/></svg></button>
+                                    </form>
+                                </div>
+                                <div class="add-section" id="task-form-{ new_milestone.id }">
+                                        <input type="text" name="task" required>
+                                        <button type="submit"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z"/></svg></button>
+                                        <button type="button" onclick="CancelAddTask({new_milestone.id})"><svg xmlns="http://www.w3.org/2000/svg" height="27px" viewBox="0 -960 960 960" width="27px" fill="#000000"><path d="m336-280-56-56 144-144-144-143 56-56 144 144 143-144 56 56-144 143 144 144-56 56-143-144-144 144Z"/></svg></button>
                                     </form>
                                 </div></ul>'''
         return html_response,200
@@ -926,11 +939,37 @@ def add_milestone_task(milestone_id):
         task = request.form['task']
         new_task = Task(user_id=session['user_id'], milestone_id=milestone_id, title=task)
         db.session.add(new_task)
+        total_tasks = Task.query.filter_by(user_id=session['user_id'], milestone_id=milestone_id).count()
+        total_completed_tasks = Task.query.filter_by(user_id=session['user_id'], milestone_id=milestone_id, completed=True).count()
+        progress = round((total_completed_tasks/total_tasks)*100,1)
+        milestone = Milestone.query.filter_by(user_id=session['user_id'], id=milestone_id).first_or_404()
+        milestone.progress = progress
+        total_tasks = 0
+        total_completed_tasks = 0
+        project = milestone.project
+        for i in project.milestones:
+            current_tasks = i.tasks
+            total_tasks += len(current_tasks)
+            total_completed_tasks += sum(1 for i in current_tasks if i.completed)
+        project_progress = round((total_completed_tasks/total_tasks)*100,1)
+        project.progress = project_progress
+        color = project.color
         db.session.commit()
-        return f'''<li class="task"> <input type="checkbox" name="anyo" value="{ new_task.id }"> {task} </li>''',200
+        html_response = f'''<li class="task" id="task-{new_task.id}"> <div class="tasks-wrapper">
+        <div><input type="checkbox" name="{ new_task.id }" value="true" hx-post="{url_for('check_task', milestone_id=milestone_id, task_id=new_task.id)}" hx-trigger="change" hx-target="#task-{new_task.id}"><span>{task}</span></div>
+        <button hx-delete="{url_for('delete_milestone_task',task_id=new_task.id)}" hx-target="#task-{new_task.id}" hx-swap="delete swap:200ms" hx-confirm="Are you sure you want to delete this task" class=""><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z"/></svg></button>
+        </li></div>
+        <div class="progress-container" id="milestone-progress-container-{milestone_id}" hx-swap-oob="true">
+        <div class="progress-label"><strong>progress: </strong><span>{progress}%</span></div>
+        <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: {progress}%; background-color:{color}"></div></div></div>'''
+        html_response += f''' <div class="progress-container" id="project-progress-container-{project.id}" hx-swap-oob="true">
+                            <div class="progress-label"><strong>progress: </strong><span>{project_progress}%</span></div>
+                            <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: {project_progress}%; background-color:{color}"></div></div></div>'''
+        return html_response,200
     except:
         db.session.rollback()
         return "",404
+
 
 @app.route('/project/<int:project_id>/edit', methods=['POST','GET'])
 @login_required
@@ -951,35 +990,29 @@ def edit_project(project_id):
             db.session.commit()
             flash('Project updated successfully',"success")
             return redirect(url_for("project",project_id=project_id))
-            # return redirect(url_for("projects"))
         except:
             db.session.rollback()
             flash("Something went wrong", "error")
     return render_template('projects/add_project.html', title="Edit Project",name=name,project=project, submit_url=url_for("edit_project",project_id=project_id))
 
-@app.route('/milestone/<int:milestone_id>/edit', methods=['POST','GET'])
+@app.route('/milestone/<int:milestone_id>/edit', methods=['POST'])
 @login_required
 def edit_milestone(milestone_id):
-    name = session['name']
-    milestone = Milestone.query.filter_by(user_id=session['user_id'], id=milestone_id).first_or_404()
-    if request.method == 'POST':
-        try:
-            milestone.title = request.form['title']
-            milestone.description = request.form['description']
-            target_date = request.form['target_date']
-            if target_date :
-                milestone.target_date = date.fromisoformat(target_date)
-            else:
-                milestone.target_date = None
-            db.session.commit()
-            flash('Milestone updated successfully')
-            return redirect(url_for('milestone',milestone_id=milestone_id))
-        except:
-            db.session.rollback()
-            flash("Something went wrong", "error")
-    return render_template('edit_milestone',name=name,milestone=milestone)
-
-#!#! Need HX-Request proccess
+    try:
+        milestone = Milestone.query.filter_by(user_id=session['user_id'], id=milestone_id).first_or_404()
+        title = request.form['title']
+        milestone.title = title
+        db.session.commit()
+        html_response = f'''<span id="milestone-title-{milestone_id}">{ title }</span>
+                            <form hx-post="{ url_for('edit_milestone', milestone_id=milestone_id) }" hx-tigger="change" hx-target="#edit-milestone-title-{milestone_id}" style="width: 600px;" class="add-section" id="milestone-title-form-{milestone_id}">
+                                <input type="text" name="title" placeholder="title" required>
+                                <button type="submit"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z"/></svg></button>
+                                <button type="button" onclick="CancelEditTitle({milestone_id})"><svg xmlns="http://www.w3.org/2000/svg" height="27px" viewBox="0 -960 960 960" width="27px" fill="#000000"><path d="m336-280-56-56 144-144-144-143 56-56 144 144 143-144 56 56-144 143 144 144-56 56-143-144-144 144Z"/></svg></button>
+                            </form>'''
+        return html_response,200
+    except:
+        db.session.rollback()
+        return '',404
 @app.route('/project/<int:project_id>/delete', methods=['DELETE','GET'])
 @login_required
 def delete_project(project_id):
@@ -988,7 +1021,6 @@ def delete_project(project_id):
         db.session.delete(project)
         db.session.commit()
         remaining = Project.query.filter_by(user_id=session['user_id']).count()
-        print('----------------- PASS')
         if request.headers.get('HX-Request'):
             if remaining==0:
                 return f'''<main class="content" id="projects-container" hx-swap-oob="true"><div class="no-projects-message">
@@ -998,26 +1030,160 @@ def delete_project(project_id):
                         </div></main>''', 200
             return "",200
         return redirect(url_for('projects'))
-    except Exception as r:
-        print(f"Error ========={r}")
+    except:
         db.session.rollback()
         if request.headers.get("HX-Request"):
             return "",400
     return redirect(url_for('projects'))
 
-@app.route('/milestone/<int:milestone_id>/delete')
+@app.route('/milestone/<int:milestone_id>/delete', methods=['DELETE'])
 @login_required
 def delete_milestone(milestone_id):
     try:
         milestone = Milestone.query.filter_by(user_id=session['user_id'],id=milestone_id).first_or_404()
-        project_id = milestone.project_id
         db.session.delete(milestone)
+        project = milestone.project
         db.session.commit()
-        flash('Milestone deleted', 'success')
-    except:
+        total_tasks = 0
+        total_completed_tasks = 0
+        for i in project.milestones:
+            current_tasks = i.tasks
+            total_tasks += len(current_tasks)
+            total_completed_tasks += sum(1 for i in current_tasks if i.completed)
+        if total_tasks != 0:
+            project_progress = round((total_completed_tasks/total_tasks)*100,1)
+        else:
+            project_progress = 0
+        project.progress = project_progress
+        color = project.color
+        html_response = f''' <div class="progress-container" id="project-progress-container-{project.id}" hx-swap-oob="true">
+                                <div class="progress-label"><strong>progress: </strong><span>{project_progress}%</span></div>
+                                <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: {project_progress}%; background-color:{color}"></div></div></div>'''
+        return html_response,200
+    except Exception as o:
+        print(f"==================={o}")
         db.session.rollback()
-        flash("Something went wrong", "error") 
-    return redirect(url_for('project',project_id=project_id))
+        return '',400
+    
+@app.route('/milestone/task/<int:task_id>/delete', methods=['DELETE'])
+@login_required
+def delete_milestone_task(task_id):
+    try:
+        task = Task.query.filter_by(user_id=session['user_id'], id=task_id).first_or_404()
+        db.session.delete(task)
+        milestone = task.milestone
+        db.session.commit()
+        total_milestone_tasks = Task.query.filter_by(user_id=session['user_id'], milestone_id=milestone.id).count()
+        total_milestone_completed_tasks = Task.query.filter_by(user_id=session['user_id'], milestone_id=milestone.id, completed=True).count()
+        if total_milestone_tasks != 0:
+            progress = round((total_milestone_completed_tasks/total_milestone_tasks)*100,1)
+        else:
+            progress = 0
+        milestone = Milestone.query.filter_by(user_id=session['user_id'], id=milestone.id).first_or_404()
+        milestone.progress = progress
+        total_tasks = 0
+        total_completed_tasks = 0
+        project = milestone.project
+        for i in project.milestones:
+            current_tasks = i.tasks
+            total_tasks += len(current_tasks)
+            total_completed_tasks += sum(1 for i in current_tasks if i.completed)
+        if total_tasks != 0:
+            project_progress = round((total_completed_tasks/total_tasks)*100,1)
+        else:
+            project_progress = 0
+        project.progress = project_progress
+        color = project.color
+        db.session.commit()
+        html_response = f'''
+                <div class="progress-container" id="milestone-progress-container-{milestone.id}" hx-swap-oob="true">
+                <div class="progress-label"><strong>progress: </strong><span>{progress}%</span></div>
+                <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: {progress}%; background-color:{color}"></div></div></div>'''
+        html_response += f''' <div class="progress-container" id="project-progress-container-{project.id}" hx-swap-oob="true">
+                                <div class="progress-label"><strong>progress: </strong><span>{project_progress}%</span></div>
+                                <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: {project_progress}%; background-color:{color}"></div></div></div>'''
+        return html_response,200
+    except:
+        return '',404
+
+
+@app.route('/milestone/<int:milestone_id>/task/<int:task_id>/check',methods=['POST'])
+@login_required
+def check_task(milestone_id,task_id):
+    try:
+        task = Task.query.filter_by(user_id=session['user_id'], id=task_id).first_or_404()
+        task.completed = True
+        db.session.commit()
+        total_milestone_tasks = Task.query.filter_by(user_id=session['user_id'], milestone_id=milestone_id).count()
+        total_milestone_completed_tasks = Task.query.filter_by(user_id=session['user_id'], milestone_id=milestone_id, completed=True).count()
+        progress = round((total_milestone_completed_tasks/total_milestone_tasks)*100,1)
+        milestone = Milestone.query.filter_by(user_id=session['user_id'], id=milestone_id).first_or_404()
+        milestone.progress = progress
+        total_tasks = 0
+        total_completed_tasks = 0
+        project = milestone.project
+        for i in project.milestones:
+            current_tasks = i.tasks
+            total_tasks += len(current_tasks)
+            total_completed_tasks += sum(1 for i in current_tasks if i.completed)
+        project_progress = round((total_completed_tasks/total_tasks)*100,1)
+        project.progress = project_progress
+        color = project.color
+        db.session.commit()
+        html_response = f'''<div class="tasks-wrapper">
+        <div><input type="checkbox" name="{ task_id }" value="true" hx-post="{url_for('uncheck_task', milestone_id=milestone_id, task_id=task_id)}" hx-trigger="change" hx-target="#task-{task_id}" checked><span>{task.title}</span></div>
+        <button hx-delete="{url_for('delete_milestone_task',task_id=task_id)}" hx-target="#task-{task_id}" hx-swap="delete swap:200ms" hx-confirm="Are you sure you want to delete this task" class=""><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z"/></svg></button>
+        </div>
+        <div class="progress-container" id="milestone-progress-container-{milestone_id}" hx-swap-oob="true">
+        <div class="progress-label"><strong>progress: </strong><span>{progress}%</span></div>
+        <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: {progress}%; background-color:{color}"></div></div></div>'''
+        html_response += f''' <div class="progress-container" id="project-progress-container-{project.id}" hx-swap-oob="true">
+                                <div class="progress-label"><strong>progress: </strong><span>{project_progress}%</span></div>
+                                <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: {project_progress}%; background-color:{color}"></div></div></div>'''
+        return html_response,200
+    except Exception as p:
+        print(f"===================={p}")
+        db.session.rollback()
+        return "",404
+@app.route('/milestone/<int:milestone_id>/task/<int:task_id>/uncheck',methods=['POST'])
+@login_required
+def uncheck_task(milestone_id,task_id):
+    try:
+        task = Task.query.filter_by(user_id=session['user_id'], id=task_id).first_or_404()
+        task.completed = False
+        db.session.commit()
+        total_milestone_tasks = Task.query.filter_by(user_id=session['user_id'], milestone_id=milestone_id).count()
+        total_milestone_completed_tasks = Task.query.filter_by(user_id=session['user_id'], milestone_id=milestone_id, completed=True).count()
+        progress = round((total_milestone_completed_tasks/total_milestone_tasks)*100,1)
+        milestone = Milestone.query.filter_by(user_id=session['user_id'], id=milestone_id).first_or_404()
+        milestone.progress = progress
+        #!
+        total_tasks = 0
+        total_completed_tasks = 0
+        project = milestone.project
+        for i in project.milestones:
+            current_tasks = i.tasks
+            total_tasks += len(current_tasks)
+            total_completed_tasks += sum(1 for i in current_tasks if i.completed)
+        project_progress = round((total_completed_tasks/total_tasks)*100,1)
+        project.progress = project_progress
+        color = project.color
+        db.session.commit()
+        html_response = f'''<div class="tasks-wrapper">
+        <div><input type="checkbox" name="{ task_id }" value="true" hx-post="{url_for('check_task', milestone_id=milestone_id, task_id=task_id)}" hx-trigger="change" hx-target="#task-{task_id}"><span>{task.title}</span></div>
+        <button hx-delete="{url_for('delete_milestone_task',task_id=task_id)}" hx-target="#task-{task_id}" hx-swap="delete swap:200ms" hx-confirm="Are you sure you want to delete this task" class=""><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z"/></svg></button>
+        </div>
+        <div class="progress-container" id="milestone-progress-container-{milestone_id}" hx-swap-oob="true">
+        <div class="progress-label"><strong>progress: </strong><span>{progress}%</span></div>
+        <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: {progress}%; background-color:{color}"></div></div></div>'''
+        html_response += f'''<div class="progress-container" id="project-progress-container-{project.id}" hx-swap-oob="true">
+                            <div class="progress-label"><strong>progress: </strong><span>{project_progress}%</span></div>
+                            <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: {project_progress}%; background-color:{color}"></div></div></div>'''
+        return html_response,200
+    except Exception as e:
+        print(f"============={e}")
+        db.session.rollback()
+        return "",404
 
 @app.route("/logout")
 def logout():
