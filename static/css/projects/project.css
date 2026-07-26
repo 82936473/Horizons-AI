@@ -17,6 +17,7 @@
     background-color:white;
     border-radius: 19px;
     display:flex;
+    border: 1px solid rgba(128, 128, 128, 0.322);   
     flex-direction: column;
 }
 .header{
@@ -137,7 +138,7 @@
     max-width: 900px;
     margin:auto;
     padding:20px;
-    border:2px solid rgba(0, 0, 0, 0.445);
+    border: 1px solid rgba(128, 128, 128, 0.322);
     border-radius:19px;
 }
 .milestone-header{
@@ -205,7 +206,7 @@
 .tasks-tree li::before,.tasks-tree li:last-child::before {
     display: none;
 }
-.tasks-wrapper{
+.task-wrapper{
     display:flex;
     justify-content: space-between;
     

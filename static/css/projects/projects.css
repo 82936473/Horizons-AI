@@ -46,9 +46,6 @@
 .add_project:hover span {
     opacity: 1;
 }
-.add_project svg {
-    flex-shrink: 0;
-}
 .projects-cards {
     width:100%;
     max-width: 1200px;
@@ -112,7 +109,6 @@
 
 .dropdown-content a{
     align-items: center;
-    gap: 8px;
     padding:14px 18px;
     text-decoration:none;
     color:white;
@@ -127,11 +123,13 @@
     background-color: #3d3d3d;
 }
 .project-card svg{
-    margin-right:12px;
+    margin-right:4px;
     width:24px;
     height:24px;
-    flex-shrink: 0;
     fill:currentColor;
+}
+svg {
+    flex-shrink: 0;
 }
 .title{
     font-weight: bold;
@@ -216,4 +214,10 @@
     100%{
         transform:translateX(120%);
         opacity:0;}
+}
+.status{
+    align-self: self-end;
+    display:flex;
+    flex-direction:row;
+    gap:6px;
 }
