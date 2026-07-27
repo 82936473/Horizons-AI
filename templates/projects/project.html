@@ -1,6 +1,7 @@
 {% extends "layout.html" %}
 {% block head %}
 <link rel="stylesheet" href="{{url_for('static', filename='css/projects/project.css')}}">
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
 {% endblock head %}
 {% block content %}
 <div class="project">
@@ -20,7 +21,7 @@
                        <button class="menuu">⋮</button>
                        <div class="dropdown-content">
                            {% if project.status == 'active' %}
-                                <a href="{{ url_for('complete_project', project_id=project.id) }}" onclick="return confirm('please confirm the action: the project and all the tasks will mark as completed')"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z"/></svg><span>Complete</span></a>
+                                <a href="{{ url_for('complete_project', project_id=project.id) }}" onclick="if(confirm('please confirm the action: the project and all the tasks will mark as completed')) { sessionStorage.setItem('showConfetti', 'true'); return true; } return false;"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z"/></svg><span>Complete</span></a>
                            {% else %}
                                 <a hx-post="{{ url_for('active_project', project_id=project.id) }}" class=""><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M621.5-338.5Q680-397 680-480t-58.5-141.5Q563-680 480-680t-141.5 58.5Q280-563 280-480t58.5 141.5Q397-280 480-280t141.5-58.5ZM480-80q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Z"/></svg><span>Mark as active</span></a>
                            {% endif %}
@@ -171,11 +172,9 @@ _____
 
 <script>
 document.addEventListener("click", function (event) {
-// Check if the clicked element (or its closest parent) is a menu button
 const button = event.target.closest(".menuu");
 
 if (button) {
-    // Prevent the click from bubbling out
     event.stopPropagation();
     
     const menuu = button.nextElementSibling;
@@ -192,7 +191,6 @@ if (button) {
         menuu.style.display = "block";
     }
 } else {
-    // If the user clicks anywhere else on the screen, hide all dropdowns
     document.querySelectorAll(".dropdown-content").forEach(menuu => {
         menuu.style.display = "none";
     });
@@ -244,6 +242,5 @@ function EditMilestoneTitle(id) {
     el.style.display = (el.style.display === "none" || el.style.display === "") ? "block" : "none";
     span.style.display = (span.style.display === "block" || span.style.display === "") ? "none" : "block";
 }
-
 </script>
 {% endblock content %}
