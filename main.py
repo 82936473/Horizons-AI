@@ -131,10 +131,21 @@ def insights(user):
             top_category = None
         count_priority_tasks = user.priorities or {'high': 0, 'medium': 0, 'low': 0} #! return type {'high':num,'medium':num,'low':num}
         top_priority = max(count_priority_tasks, key=count_priority_tasks.get)
+        projects = []
+        completed_projects = 0
+        active_projects = 0
+        all_projects = Project.query.filter_by(user_id=session['user_id']).all()
+        for i in all_projects:
+            current_project = {'title': i.title, 'progress': f"{i.progress}%", 'target_date': i.target_date, 'last_update': i.updated_at}
+            projects.append(current_project)
+            if i.status == 'completed':
+                completed_projects += 1
+            else:
+                active_projects += 1
     except Exception as e:
         print(f"Error: {e}")
         
-    return {"name":user.name,"Total completed tasks":total_completed_tasks,"Total completed tasks this week":week_completed_tasks, 'weekly change': weekly_change,"Average completion time in hours":average_completion_time,"top category":top_category,"Count completed tasks by priority":count_priority_tasks,'top priority':top_priority}
+    return {"name":user.name,"Total completed tasks":total_completed_tasks,"Total completed tasks this week":week_completed_tasks, 'weekly change': weekly_change,"Average completion time in hours":average_completion_time,"top category":top_category,"Count completed tasks by priority":count_priority_tasks,'top priority':top_priority, 'projects':projects, 'total completed projects': completed_projects, 'total active projects': active_projects}
 
 scheduler = APScheduler()
 @scheduler.task('cron', id='weekly_insights_reset', day_of_week='sun', hour=23, minute=59)

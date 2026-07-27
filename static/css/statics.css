@@ -32,7 +32,7 @@
     font-family: "Poppins", sans-serif;
     display:flex;
     flex-wrap: wrap;
-    gap:20px;
+    gap:10px;
     height: auto;
     margin-bottom: 30px;
 }
@@ -140,4 +140,10 @@ svg{
 .chart-canvas{
     max-height: 250px;
     max-width: 250px; 
+}
+@media (max-width: 768px) {
+    .static-item {
+        flex: 1 1 100%;
+        width: 100%;
+    }
 }

@@ -70,7 +70,16 @@
                     {% endif %}
                 </div>
             {% endif %}
+            <div style=" border-left: 4px solid #8b5cf6;" class="static-item">
+                <span class="stat-title"><i class="fas fa-tag"></i> Total completed projects</span>
+                <p class="value">{{ statics['total completed projects']}}</p>
+            </div>
+            <div style=" border-left: 4px solid #8b5cf6;" class="static-item">
+                    <span class="stat-title"><i class="fas fa-tag"></i> Total active projects</span>
+                    <p class="value">{{ statics['total active projects']}}</p>
+            </div>
         </div>
+        {% if charts %}
         <div class="header">
              <h2>Analytics</h2>
         </div>
@@ -82,6 +91,7 @@
                 </div>
             {% endfor %}
         </div>
+        {% endif %}
     </div>
 </div>
 
