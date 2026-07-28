@@ -197,6 +197,36 @@ class AIModels:
         )
         return response.choices[0].message.content
 
+    def project_creator(self, prompt):
+        response = self.client.chat.completions.create(
+            model="openai/gpt-oss-120b",
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "You are generating the content of a project dashboard.\n"
+                        "you're given a title of the project, and the goal from it, Your goal is to create a full project based on these info\n"
+                        "rewrite everything with your own style\n"
+                        "every project have a title, goal , a description, and a target date\n"
+                        "if the target date is not in the prompt, return none. (the date can be written in letters in the user prompt, converte in to a valid date (YYYY-MM-DD))\n"
+                        "give the project a nice detailed description (not too much)\n"
+                        "use the first first personal pronoun 'I', like a human will do\n"
+                        "the project is devided into milestones, each milestone contain tasks.\n"
+                        'return only a valid JSON format like the folowing: {"project": {"title":"...", "goal":"...", "description":"...","target_date": "...", "milestones": [{"title": "...", "tasks": [...,...,...]}] } }, Nothing else\n'
+                        "if the given title and goal are not making any sens, return none: {'project': None}"
+                    )
+                },
+                {
+                    "role":"user",
+                    "content": f"prompt: {prompt}."
+                }
+            ],
+            temperature=0.0
+        )
+        data=json.loads(response.choices[0].message.content)
+        project=data.get('project',data)
+        return project
+
 if __name__=='__main__':
     ai_model=AIModels()
-    print(ai_model.static_generator_message( {"user name":'Ayman',"Total completed tasks":10,"Total completed tasks this week":3,"Average completion time in hours":0.0342452,"Top category":'Work',"Count completed tasks by priority":{'high':2,'medium':1,'low':0}}))
+    print(ai_model.project_creator({'title':'math evolution', 'goal':'get the first class in the first and second exam the next mounth'}))
