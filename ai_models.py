@@ -208,12 +208,17 @@ class AIModels:
                         "you're given a title of the project, and the goal from it, Your goal is to create a full project based on these info\n"
                         "rewrite everything with your own style\n"
                         "every project have a title, goal , a description, and a target date\n"
-                        "if the target date is not in the prompt, return none. (the date can be written in letters in the user prompt, converte in to a valid date (YYYY-MM-DD))\n"
+                        "extract the target date from the goal, title, or the target_date itself, if present, even if written in letters like (October 15th) or (within 6 months) or (tomorrow)...\n"
+                        'converte the target date in to a valid date (YYYY-MM-DD))\n'
+                        'if there is no time indicator or deadline provied, return "None"\n'
                         "give the project a nice detailed description (not too much)\n"
-                        "use the first first personal pronoun 'I', like a human will do\n"
+                        "use the first personal pronoun 'I', like a human will do\n"
                         "the project is devided into milestones, each milestone contain tasks.\n"
+                        '''Don't generate generic phase, create chronological milestones representing actual project phases ("phase 1: ...", "Phase 2": ..., ...)\n'''
+                        "every milestone must contain highly specific, actionable tasks, AVOID vague tasks, they must be concerte and granular\n"
+                        "ensure the milestones cover the entire lifecycle of the project."
                         'return only a valid JSON format like the folowing: {"project": {"title":"...", "goal":"...", "description":"...","target_date": "...", "milestones": [{"title": "...", "tasks": [...,...,...]}] } }, Nothing else\n'
-                        "if the given title and goal are not making any sens, return none: {'project': None}"
+                        'if the given title and goal are not making any sens, return none: {"project": "None"}\n'
                     )
                 },
                 {
@@ -229,4 +234,3 @@ class AIModels:
 
 if __name__=='__main__':
     ai_model=AIModels()
-    print(ai_model.project_creator({'title':'math evolution', 'goal':'get the first class in the first and second exam the next mounth'}))

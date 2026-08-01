@@ -99,8 +99,7 @@ def insights(user):
             else:
                 weekly_change[0] = 'no data from last week'
         else:
-            change_percent =  ((week_completed_tasks - last_week_completed_tasks) / last_week_completed_tasks) * 100
-        
+            change_percent =  ((week_completed_tasks - last_week_completed_tasks) / last_week_completed_tasks) * 100        
             if change_percent > 0:
                 weekly_change[0] =  f"{change_percent:.1f}% from last week"
                 weekly_change[1] = 1
@@ -130,18 +129,19 @@ def insights(user):
         else:
             top_category = None
         count_priority_tasks = user.priorities or {'high': 0, 'medium': 0, 'low': 0} #! return type {'high':num,'medium':num,'low':num}
-        top_priority = max(count_priority_tasks, key=count_priority_tasks.get)
+        if any(count_priority_tasks):
+            top_priority = max(count_priority_tasks, key=count_priority_tasks.get)
+        else:
+            top_priority = None
         projects = []
-        completed_projects = 0
         active_projects = 0
         all_projects = Project.query.filter_by(user_id=session['user_id']).all()
         for i in all_projects:
             current_project = {'title': i.title, 'progress': f"{i.progress}%", 'target_date': i.target_date, 'last_update': i.updated_at}
             projects.append(current_project)
-            if i.status == 'completed':
-                completed_projects += 1
-            else:
+            if i.status != 'completed':
                 active_projects += 1
+        completed_projects = user.total_completed_projects or 0
     except Exception as e:
         print(f"Error: {e}")
         
@@ -833,7 +833,10 @@ def statics():
         name = session['name']
         charts=[]
         statics=insights(user)
-        summary = ai_models.sammary_generator(statics)
+        try:
+            summary = ai_models.sammary_generator(statics)
+        except:
+            summary = None
         streak = user.streak
         category_labels=[]
         category_values=[]
@@ -895,6 +898,51 @@ def add_project():
         return redirect(url_for("project",project_id=new_project.id))
     return render_template('projects/add_project.html', title='Add Project',name=name, submit_url=url_for("add_project"))
 
+@app.route('/project/ai/new', methods=['POST'])
+@login_required
+def quick_add_project():
+    try:
+        title = request.form.get('title')
+        description = request.form.get('description')
+        color = request.form.get('color')
+        goal = request.form.get('goal')
+        target_date = request.form.get('target_day')
+        if target_date:
+            target_date = date.fromisoformat(target_date)
+        else:
+            target_date = None
+        ai_project = ai_models.project_creator({'title':title,'goal':goal,'description':description,'target date':target_date if target_date else 'None'})
+        print(ai_project)
+        if ai_project != 'None':
+            title = ai_project['title']
+            goal = ai_project['goal']
+            description = ai_project['description']
+            if not target_date:
+                target_date = ai_project['target_date']
+                if target_date != 'None':
+                    target_date = date.fromisoformat(target_date)
+                else:
+                    target_date = None
+            new_project = Project(user_id=session['user_id'], color=color, title=title, goal=goal, description=description, target_date=target_date)
+            db.session.add(new_project)
+            for milestone in ai_project['milestones']:
+                title = milestone['title']
+                new_milestone = Milestone(user_id=session['user_id'], project=new_project, title=title)
+                db.session.add(new_milestone)
+                for task in milestone['tasks']:
+                    new_task = Task(user_id=session['user_id'], milestone=new_milestone, title=task)
+                    db.session.add(new_task)
+            db.session.commit()
+            return redirect(url_for('project', project_id=new_project.id))
+        else:
+            print('FAIL')
+            flash('Cannot fulfit this request', 'error')
+            return redirect(url_for('add_project'))
+    except Exception as e:
+        print(f"=========== {e}")
+        db.session.rollback()
+        return redirect(url_for('add_project'),404)
+
 @app.route('/project/<int:project_id>/milestone/new', methods=['POST'])
 @login_required
 def add_milestone(project_id):
@@ -918,7 +966,7 @@ def add_milestone(project_id):
                         <div class="dropdown">
                             <button class="menuu">⋮</button>
                             <div class="dropdown-content" id="milestone-{new_milestone.id}-dropdown-content">
-                                <a onclick="EditMilestoneTitle({new_milestone.id})" class=""><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z"/></svg><span>Edit Name</span></a>
+                                <a onclick="EditMilestoneTitle({new_milestone.id})" class=""><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z"/></svg><span>Edit Title</span></a>
                                 <a hx-delete="{ url_for('delete_milestone', milestone_id=new_milestone.id) }" hx-target="#milestone-{ new_milestone.id }" hx-swap="delete swap:200ms"  hx-confirm="Please confirm the deleting?" class=""><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24"><path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360Z"/></svg><span>Delete</span></a>
                             </div>
                         </div></div> <button class="toggle-arrow collapsed" onclick="toggletasks(this)"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M480-528 296-344l-56-56 240-240 240 240-56 56-184-184Z"/></svg></button></div>'''
@@ -966,7 +1014,7 @@ def add_milestone_task(milestone_id):
         db.session.commit()
         html_response += f'''<div class="dropdown-content" id="milestone-{milestone_id}-dropdown-content" hx-swap-oob="true">
                                 <a id="complete-milestone-{milestone_id}" hx-post="{ url_for('complete_milestone', milestone_id=milestone_id) }" hx-target="#milestone-{milestone_id}" onclick="return confirm('all tasks under this milestone will mark as completed')" class><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z"/></svg><span>Complete</span></a>
-                                <a onclick="EditMilestoneTitle({milestone_id})" class=""><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z"/></svg><span>Edit Name</span></a>
+                                <a onclick="EditMilestoneTitle({milestone_id})" class=""><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z"/></svg><span>Edit Title</span></a>
                                 <a hx-delete="{ url_for('delete_milestone', milestone_id=milestone_id) }" hx-target="#milestone-{milestone_id}" hx-swap="delete swap:200ms" hx-confirm="Please confirm the deleting" class=""><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24"><path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360Z"/></svg><span>Delete</span></a>
                             </div>'''
         html_response += f'''
@@ -1043,6 +1091,8 @@ def complete_project(project_id):
             milestone.status = 'completed'
             for task in milestone.tasks:
                 task.completed = True
+        user = User.query.filter_by(id=session['user_id']).first_or_404()
+        user.total_completed_projects += 1
         db.session.commit()
         return redirect(url_for('projects'))
     except:
@@ -1090,11 +1140,13 @@ def complete_milestone(milestone_id):
             current_tasks = milestone.tasks
             total_tasks += len(current_tasks)
             total_completed_tasks += sum(1 for i in current_tasks if i.completed)
-        project_progress = round((total_tasks/total_completed_tasks)*100,1)
+        project_progress = round((total_completed_tasks/total_tasks)*100,1)
         project.progress = project_progress
         project.updated_at = datetime.now(timezone.utc)
         if project_progress == 100.0 and project.status != 'completed':
             project.status = 'completed'
+            user = User.query.filter_by(id=session['user_id']).first_or_404()
+            user.total_completed_projects += 1
             html_response += f'''<div class="status" id="project-{project.id}-status-container" hx-swap-oob="true">        
                                 <span id="project-status" class="badge bg-secondary-subtle text-secondary border border-secondary-subtle d-inline-flex align-items-center gap-1 py-2 px-3 rounded-pill" class="><i class="bi bi-tag"></i>Completed</span>
                                 <div class="dropdown">
@@ -1124,7 +1176,7 @@ def complete_milestone(milestone_id):
                              <div class="dropdown">
                                 <button class="menuu">⋮</button>
                                 <div class="dropdown-content" id="milestone-{milestone_id}-dropdown-content">
-                                    <a onclick="EditMilestoneTitle({milestone_id})" class=""><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z"/></svg><span>Edit Name</span></a>
+                                    <a onclick="EditMilestoneTitle({milestone_id})" class=""><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z"/></svg><span>Edit Title</span></a>
                                     <a hx-delete="{ url_for('delete_milestone', milestone_id=milestone_id) }" hx-target="#milestone-{ milestone_id }" hx-swap="delete swap:200ms"  hx-confirm="Please confirm the deleting?" class=""><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24"><path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360Z"/></svg><span>Delete</span></a>
                                 </div>
                              </div>
@@ -1146,7 +1198,7 @@ def complete_milestone(milestone_id):
         for task in milestone.tasks:
             html_response += f'''<li class="task" id="task-{task.id}">
                                     <div class="task-wrapper">
-                                        <div><input type="checkbox" value="true" hx-post="{url_for('check_task', milestone_id=milestone_id, task_id=task.id)}" hx-trigger="change" hx-target="#task-{task.id}" checked><span>{task.title}</span></div>
+                                        <div><input type="checkbox" value="true" hx-post="{url_for('uncheck_task', milestone_id=milestone_id, task_id=task.id)}" hx-trigger="change" hx-target="#task-{task.id}" checked><span>{task.title}</span></div>
                                         <button hx-delete="{{url_for('delete_milestone_task',task_id=task.id)}}" hx-target="#task-{{task.id}}" hx-swap="delete swap:200ms" hx-confirm="Are you sure you want to delete this task" class=""><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z"/></svg></button>
                                     </div>
                                  </li>'''
@@ -1213,8 +1265,10 @@ def delete_milestone(milestone_id):
         project.updated_at = datetime.now(timezone.utc)
         color = project.color
         html_response = ''
-        if project_progress == 100.0:
+        if project_progress == 100.0 and project.status != 'completed':
             project.status = 'completed'
+            user = User.query.filter_by(id=session['user_id']).first_or_404()
+            user.total_completed_project += 1
             html_response += f'''<div class="status" id="project-{project.id}-status-container" hx-swap-oob="true">        
                                     <span id="project-status" class="badge bg-secondary-subtle text-secondary border border-secondary-subtle d-inline-flex align-items-center gap-1 py-2 px-3 rounded-pill" class="><i class="bi bi-tag"></i>Completed</span>
                                     <div class="dropdown">
@@ -1268,6 +1322,8 @@ def delete_milestone_task(task_id):
         project.updated_at = datetime.now(timezone.utc)
         if project_progress == 100.0 and project.status != 'completed':
             project.status = 'completed'
+            user = User.query.filter_by(id=session['user_id']).first_or_404()
+            user.total_completed_projects += 1
             html_response += f'''<div class="status" id="project-{project.id}-status-container" hx-swap-oob="true">        
                                 <span id="project-status" class="badge bg-secondary-subtle text-secondary border border-secondary-subtle d-inline-flex align-items-center gap-1 py-2 px-3 rounded-pill" class="><i class="bi bi-tag"></i>Completed</span>
                                 <div class="dropdown">
@@ -1304,6 +1360,7 @@ def check_task(milestone_id,task_id):
         total_milestone_tasks = Task.query.filter_by(user_id=session['user_id'], milestone_id=milestone_id).count()
         total_milestone_completed_tasks = Task.query.filter_by(user_id=session['user_id'], milestone_id=milestone_id, completed=True).count()
         progress = round((total_milestone_completed_tasks/total_milestone_tasks)*100,1)
+        print(f"============= {total_milestone_tasks} ============ {total_milestone_completed_tasks} ============ {progress}")
         milestone = Milestone.query.filter_by(user_id=session['user_id'], id=milestone_id).first_or_404()
         milestone.progress = progress
         total_tasks = 0
@@ -1318,6 +1375,8 @@ def check_task(milestone_id,task_id):
         project.progress = project_progress
         if project_progress == 100.0 and project.status != 'completed':
             project.status = 'completed'
+            user = User.query.filter_by(id=session['user_id']).first_or_404()
+            user.total_completed_projects += 1
             html_response += f'''<div class="status" id="project-{project.id}-status-container" hx-swap-oob="true">        
                                     <span id="project-status" class="badge bg-secondary-subtle text-secondary border border-secondary-subtle d-inline-flex align-items-center gap-1 py-2 px-3 rounded-pill" class="><i class="bi bi-tag"></i>Completed</span>
                                     <div class="dropdown">
@@ -1340,7 +1399,7 @@ def check_task(milestone_id,task_id):
         db.session.commit()
         if progress == 100.0:
             html_response += f'''<div class="dropdown-content" id="milestone-{milestone_id}-dropdown-content" hx-swap-oob="true">
-                                    <a onclick="EditMilestoneTitle({milestone_id})" class=""><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z"/></svg><span>Edit Name</span></a>
+                                    <a onclick="EditMilestoneTitle({milestone_id})" class=""><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z"/></svg><span>Edit Title</span></a>
                                     <a hx-delete="{ url_for('delete_milestone', milestone_id=milestone_id) }" hx-target="#milestone-{ milestone_id }" hx-swap="delete swap:200ms"  hx-confirm="Please confirm the deleting?" class=""><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24"><path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360Z"/></svg><span>Delete</span></a>
                                 </div>'''
         html_response += f'''<div class="task-wrapper">
@@ -1385,7 +1444,7 @@ def uncheck_task(milestone_id,task_id):
         html_response = ''
         html_response += f'''<div class="dropdown-content" id="milestone-{milestone_id}-dropdown-content" hx-swap-oob="true">
                                 <a hx-post="{ url_for('complete_milestone', milestone_id=milestone_id) }" hx-target="#milestone-{milestone_id}" onclick="return confirm('all tasks under this milestone will mark as completed')" class=""><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z"/></svg><span>Complete</span></a>
-                                <a onclick="EditMilestoneTitle({milestone_id})" class=""><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z"/></svg><span>Edit Name</span></a>
+                                <a onclick="EditMilestoneTitle({milestone_id})" class=""><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z"/></svg><span>Edit Title</span></a>
                                 <a hx-delete="{ url_for('delete_milestone', milestone_id=milestone_id) }" hx-target="#milestone-{ milestone_id }" hx-swap="delete swap:200ms"  hx-confirm="Please confirm the deleting?" class=""><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24"><path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360Z"/></svg><span>Delete</span></a>
                             </div>'''
         html_response += f'''<div class="task-wrapper">

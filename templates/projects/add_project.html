@@ -6,6 +6,7 @@
 {% block content %}
 <div class="add-project">
     {% block sidebar %} {{ super() }} {% endblock %}
+    {% block flash %} {{ super() }} {% endblock flash %}
     <div class="content">
       <h1>{{ title }}</h1>
       {% if project %}
@@ -29,7 +30,7 @@
             <button type="submit">Save changes</button>
         </form>
       {% else %}
-        <form class="add-card blue" action="{{ submit_url }}" method="POST" id="project-card">
+        <form class="add-card blue" method="POST" id="project-card">
             <label>Title</label>
             <input type="text" name="title" placeholder="title" required>
             <label>Goal</label>
@@ -46,7 +47,10 @@
             </select>
             <label>Taret date</label>
             <input type="date" name="target_day" >
-            <button type="submit">Add Project</button>
+            <div class="submit-buttons">
+              <button type="submit" class="submit_prompt" formaction="{{ url_for('add_project') }}"><span>Add Project<span></button>
+              <button type="submit" class="submit_prompt" formaction="{{ url_for('quick_add_project') }}"><span>Generate full project with AI</span></button>
+            </div>
         </form>
       {% endif %}
 
@@ -95,6 +99,10 @@ priority.addEventListener("change", function(){
     }
     
 });
-
+document.getElementById('project-card').addEventListener('submit', function(e) {
+    const clickedButton = e.submitter
+      clickedButton.classList.add('spining')
+      clickedButton.style.pointerEvents = 'none'
+});
 </script>
 {% endblock content %}

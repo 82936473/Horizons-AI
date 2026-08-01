@@ -8,6 +8,7 @@ class User(db.Model):
     last_week_completed_tasks = db.Column(db.Integer, default=0)
     weekly_completed_tasks = db.Column(db.Integer, default=0)
     total_completed_tasks = db.Column(db.Integer, default=0)
+    total_completed_projects = db.Column(db.Integer, default=0)
     average_completion_time = db.Column(db.Float, default=0.0)
     categories = db.Column(db.JSON)
     priorities = db.Column(db.JSON)
@@ -77,7 +78,7 @@ class Project(db.Model):
     color = db.Column(db.String(20), default="#3B82F6")
     status = db.Column(db.String(20), default="active") # active, completed, maybe(archived)
     goal = db.Column(db.Text)
-    target_date = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    target_date = db.Column(db.DateTime(timezone=True), nullable=True)
     progress = db.Column(db.Float, default=0)
     updated_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     @property

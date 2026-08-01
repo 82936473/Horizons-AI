@@ -69,21 +69,14 @@
     box-sizing: border-box;
 }
 .add-card button{
-    margin-top: 15px;
-
     padding: 15px;
-
     font-size: 18px;
     font-weight: bold;
-
     background: #6d4aff;
     color: white;
-
     border: none;
     border-radius: 12px;
-
     cursor: pointer;
-
     transition: .2s;
 }
 
@@ -118,6 +111,12 @@
     border-top: 8px solid purple;
     background-color: rgba(128, 0, 128, 0.39);
 }
+.submit-buttons{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap:10px;
+}
 @media (max-width:700px){
 
     .add-card{
@@ -125,4 +124,66 @@
         padding:20px;
     }
 
+}
+.submit_prompt {
+    transition: all 250ms ease;
+}
+
+.submit_prompt.spining {
+    display: inline-block;
+    background: transparent;
+    position: relative;
+    margin: 10px auto;
+    width: 36px;
+    height: 36px;
+    bottom: 0px;
+    min-width: 36px;
+    border-radius: 50%;
+    border: 3px solid rgba(0, 0, 0, 0.1);
+    border-top-color: #3498db;
+    animation: spin 800ms linear infinite !important;
+}
+.submit_prompt.spining span{
+    display: none;
+}
+
+@keyframes spin {to {transform: rotate(360deg);}}
+
+@keyframes local-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+.flash-container{
+    position:fixed;
+    bottom:55px;
+    right:10px;
+    z-index:10;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+}
+.flash{
+    position:relative;
+    width:100%;
+    color:white;
+    border-radius:8px;
+    animation:fadeOut 5s forwards;
+    animation: slideInOut 5s ease forwards;
+}
+@keyframes slideInOut{
+    0%{
+        transform:translateX(120%);
+        opacity:0;
+    }
+    10%{
+        transform:translateX(0);
+        opacity:1;
+    }
+    85%{
+        transform:translateX(0);
+        opacity:1;
+    }
+    100%{
+        transform:translateX(120%);
+        opacity:0;}
 }
