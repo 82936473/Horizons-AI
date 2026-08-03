@@ -330,7 +330,7 @@ def add_task():
 @login_required
 def quickadd():
     try:
-        remaining=Task.query.filter_by(user_id=session['user_id']).count()
+        remaining=Task.query.filter_by(user_id=session['user_id'],milestone_id=None).count()
         prompt=request.form.get('quickadd_prompt')
         tasks=ai_models.quick_add(prompt)
         created_tasks=[]
@@ -391,9 +391,9 @@ def quickadd():
             html_response+=f'''<button class='menuu'>⋮</button>
                             <div class='dropdown-content'>
                             <a href="{ url_for('edit_task', task_id=task.id) }"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z"/></svg><span>Edit</span></a>
-                            <a hx-post="{ url_for('complete_task',task_id=task.id) }" hx-target="#task-{task.id}" hx-swap="delete swap:200ms" class=""><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z"/></svg><span>Complete</span></a>
+                            <a hx-post="{ url_for('complete_task',task_id=task.id) }" hx-target="#task-{task.id}" hx-swap="delete swap:200ms" hx-indicator="#spinner" class=""><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z"/></svg><span>Complete</span></a>
                             <a href="{ url_for('add_subtask',task_id=task.id) }"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="m560-120-57-57 144-143H200v-480h80v400h367L503-544l56-57 241 241-240 240Z"/></svg><span>Add Subtask</span></a>
-                            <a hx-delete="{ url_for('delete_task', task_id=task.id) }" hx-target="#task-{task.id}" hx-swap="delete swap:200ms"  hx-confirm="Are you sure you want to delete this task?" class="" ><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24"><path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360Z"/></svg><span>Delete</span></a></div></div></div><hr>
+                            <a hx-delete="{ url_for('delete_task', task_id=task.id) }" hx-target="#task-{task.id}" hx-swap="delete swap:200ms"  hx-confirm="Are you sure you want to delete this task?" hx-indicator="#spinner" class="" ><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24"><path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360Z"/></svg><span>Delete</span></a></div></div></div><hr>
                 '''
             html_response += f"<div class='task-title'>"
             html_response += '<div class="d-flex flex-wrap align-items-center gap-3 mt-2">'
@@ -590,7 +590,7 @@ def delete_task(task_id):
         task=Task.query.filter_by(id=task_id,user_id=session["user_id"]).first_or_404()
         db.session.delete(task)
         db.session.commit()
-        remaining = Task.query.filter_by(user_id=session["user_id"]).count()
+        remaining = Task.query.filter_by(user_id=session["user_id"],milestone_id=None).count()
         if request.headers.get('HX-Request'):
             if remaining==0:
                 return f'''<main class="content" id="tasks-container" hx-swap-oob="true"><div class="no-tasks-message">
@@ -725,7 +725,7 @@ def complete_task(task_id):
             user.priorities={'high':0,'medium':0,'low':0}
         #!!
         db.session.commit()
-        remaining = Task.query.filter_by(user_id=session["user_id"]).count()
+        remaining = Task.query.filter_by(user_id=session["user_id"],milestone_id=None).count()
         if request.headers.get("HX-Request"):
             if remaining==0:
                 return f'''<main class="content" id="tasks-container" hx-swap-oob="true"><div class="no-tasks-message">

@@ -1,3 +1,20 @@
+.spinner-global{
+    position:fixed;
+    top:0px;
+    left:0px;
+    right:0px;
+    height:3px;
+    z-index:9999
+}
+.loadbar-fill{
+    background-color:#ef4444;
+    position:absolute;
+    top:0px;
+    width: 35%;
+    height:100%;
+    border-radius: 0px 2px 2px 0px;
+    animation: 1.5s ease-in-out 0s infinite normal none running loadbar-slide;
+}
 .dashboard{
     display:flex;
     min-height:100vh;
@@ -184,7 +201,7 @@
 }
 .flash-container{
     position:fixed;
-    bottom:55px;
+    bottom:70px;
     right:10px;
     z-index:10;
     display:flex;
@@ -215,6 +232,10 @@
     100%{
         transform:translateX(120%);
         opacity:0;}
+}
+@keyframes loadbar-slide {
+    0%{left:-35%}
+    100%{left:100%}
 }
 .delete-all-tasks{
     position:absolute;
