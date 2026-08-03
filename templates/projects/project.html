@@ -8,8 +8,7 @@
     {% block sidebar %} {{ super() }} {% endblock sidebar %}
     {% block flash %} {{ super() }} {% endblock flash %}
     <div id="spinner" class="spinner-global htmx-indicator">
-        <div class="spinner-circle"></div>
-        <span style="color:#1f2937; font-size:large;">Please wait... </span>
+        <div class="loadbar-fill" style="background-color: {{project.color}};"></div>
     </div>
     <main class="content" id="project-container">
         <div class="project-infos" style=" border:2px solid {{project.color}};border-top: 8px solid {{project.color}};">

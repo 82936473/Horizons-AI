@@ -51,7 +51,7 @@
 .sidebar li:first-child{
     display:flex;
     justify-content:flex-end;
-    margin-bottom:20px;
+    margin-bottom:15px;
 }
 
 #toggle-btn{
@@ -90,7 +90,10 @@
     color:#333;
     transition:.2s;
 }
-
+.streak-badge{
+    margin-left:50px;
+    margin-bottom: 15px;
+}
 .sidebar a:hover{
     background:#d9d9d9;
     .sidebar{

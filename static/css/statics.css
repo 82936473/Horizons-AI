@@ -14,12 +14,6 @@
 .title{
     margin-bottom: 40px;
 }
-.badge{
-    position:fixed;
-    font-size:16px;
-    top:30px;
-    right:70px;
-}
 .statics{
     flex:1;
     display: flex;
@@ -145,5 +139,10 @@ svg{
     .static-item {
         flex: 1 1 100%;
         width: 100%;
+    }
+}
+@media (hover:none){
+    .static-item{
+        height: 120px;
     }
 }

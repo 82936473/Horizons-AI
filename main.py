@@ -223,7 +223,7 @@ def sign_up():
             existing_user=User.query.filter_by(username=valid_email).first()
             if existing_user:
                 raise ValueError('An account with this email address already exists.')
-            new_user = User(username=valid_email,name='',password=generate_password_hash(password))
+            new_user = User(username=valid_email,name='',password=generate_password_hash(password),last_login=datetime.now(timezone.utc))
             db.session.add(new_user)
             db.session.commit()
             session["user_id"]=new_user.id
@@ -240,10 +240,11 @@ def user_name():
         name=request.form.get("name")
         user = User.query.filter_by(id=session["user_id"]).first_or_404()
         user.name=name
-        # greating_email(user.username,name) #!#! Make this as comment while offline testing
+        greating_email(user.username,name)
         user.streak = 1
         db.session.commit()
         session['name'] = name
+        session['streak'] = 1
         return redirect(url_for('dashboard'))
     return render_template("user's_name.html")
 
@@ -263,6 +264,7 @@ def log_in():
             session["user_id"] = user.id
             session["username"] = user.username
             session["name"] = user.name
+            session['streak'] = user.streak
             purge_expired_tasks()
             return redirect(url_for("dashboard"))
         except ValueError as e:
@@ -288,9 +290,7 @@ def dashboard():
     else:
         query = query.order_by(Task.due_date)
     tasks = query.all()
-    for  i in  tasks:
-        print(f"============={i.milestone_id}")
-    return render_template("dashboard.html",title="Dashboard",tasks=tasks,status="dashboard",name=name)
+    return render_template("dashboard.html",title="Dashboard",tasks=tasks,status="dashboard",name=name,streak=session['streak'])
 @app.route("/task/new", methods=['GET','POST'])
 @login_required
 def add_task():
@@ -323,7 +323,7 @@ def add_task():
             flash(f"Something went wrong", "error")
             db.session.rollback()
         return redirect(url_for("dashboard"))
-    return render_template("add_task.html",title="Add Task",name=name,status='add_task',submit_url=url_for('add_task'))
+    return render_template("add_task.html",title="Add Task",name=name,status='add_task',submit_url=url_for('add_task'), streak=session['streak'])
 
 #!#! need flash and finishing
 @app.route('/quickadd',methods=['POST'])
@@ -334,14 +334,16 @@ def quickadd():
         prompt=request.form.get('quickadd_prompt')
         tasks=ai_models.quick_add(prompt)
         created_tasks=[]
+        if not tasks:
+            response = make_response("",200)
+            response.headers['HX-Trigger'] = 'quick_add_error'
+            return response
         for task in tasks:
             title=task['task']
             priority=task['priority']
             category=task['category']
             due_date=task['due_date']
             user_id=session['user_id']
-            if title=='None':
-                return ''
             if category=='None':
                 category=None
             if due_date=='None':
@@ -489,7 +491,7 @@ def add_subtask(task_id):
             flash(f"Something went wrong", "error")
             db.session.rollback()
         return redirect(url_for('dashboard'))
-    return render_template("add_task.html",title="Add Subtask",name=name,submit_url=url_for("add_subtask",task_id=task_id))
+    return render_template("add_task.html",title="Add Subtask",name=name,submit_url=url_for("add_subtask",task_id=task_id),streak=session['streak'])
 
 @app.route('/edit/<int:task_id>', methods=['GET','POST'])
 @login_required
@@ -524,7 +526,7 @@ def edit_task(task_id):
             flash("Something went wrong", "error")
             db.session.rollback()
         return redirect(url_for("dashboard"))
-    return render_template("add_task.html", title='Edit Task',task=task,name=name,submit_url=url_for('edit_task',task_id=task.id))
+    return render_template("add_task.html", title='Edit Task',task=task,name=name,submit_url=url_for('edit_task',task_id=task.id),streak=session['streak'])
 
 @app.route('/edit_suggestion_task/<task_id>/<_id_>',methods=['POST','GET'])
 @login_required
@@ -552,7 +554,7 @@ def edit_suggestion_task(task_id,_id_):
             flash("Something went wrong", "error")
             db.session.rollback()
         return render_template("ai_suggestions.html",title="suggestions",tasks=tasks,id=_id_,name=name)
-    return render_template("add_task.html", title='Edit Task',task=task, id=_id_,name=name,submit_url=url_for('edit_suggestion_task',task_id=task.id,_id_=_id_))
+    return render_template("add_task.html", title='Edit Task',task=task, id=_id_,name=name,submit_url=url_for('edit_suggestion_task',task_id=task.id,_id_=_id_),streak=session['streak'])
 
 @app.route('/edit_subtask/<subtask_id>',methods=['POST','GET'])
 @login_required
@@ -579,7 +581,7 @@ def edit_subtask(subtask_id):
             return redirect(url_for('dashboard'))
     except:
         pass
-    return render_template("add_task.html",title='Edit Subtask', task=subtask,name=name,submit_url=url_for('edit_subtask',subtask_id=subtask.id))
+    return render_template("add_task.html",title='Edit Subtask', task=subtask,name=name,submit_url=url_for('edit_subtask',subtask_id=subtask.id), streak=session['streak'])
 
 @app.route('/delete/<int:task_id>', methods=['DELETE'])
 @login_required
@@ -732,8 +734,7 @@ def complete_task(task_id):
                 <a href="{ url_for('add_task') }" class="btn btn-info add_task"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#FFFFFF"><path d="M440-120v-320H120v-80h320v-320h80v320h320v80H520v320h-80Z"/></svg><span>Add Task</span></a>
                 </div></main>''', 200
             return f'''<ul class="subtask-tree" id="subtasks-{task_id}" hx-swap-oob="delete"></ul>''',200
-    except Exception as r:
-        print(f"============={r}")
+    except:
         db.session.rollback()
         if request.headers.get("HX-Request"):
             return "",400
@@ -774,7 +775,7 @@ def completed_tasks():
     except:
         flash("Something went wrong", "error")
         db.session.rollback()
-    return render_template("completed.html", title="Completed Tasks", tasks=tasks, status="completed_tasks",name=name)
+    return render_template("completed.html", title="Completed Tasks", tasks=tasks, status="completed_tasks",name=name,streak=session['streak'])
 
 
 @app.route('/break-down/<task_id>',methods=['GET','POST'])
@@ -794,7 +795,7 @@ def break_down(task_id):
     except:
         flash('Something went wrong','error')
         db.session.rollback()
-    return render_template("ai_suggestions.html",title="suggestions",tasks=breaked_tasks,id=task_id,name=name)
+    return render_template("ai_suggestions.html",title="suggestions",tasks=breaked_tasks,id=task_id,name=name,streak=streak)
 
 @app.route('/confirm-break-down/<task_id>')
 @login_required
@@ -837,7 +838,6 @@ def statics():
             summary = ai_models.sammary_generator(statics)
         except:
             summary = None
-        streak = user.streak
         category_labels=[]
         category_values=[]
         user_categories = user.categories
@@ -849,7 +849,7 @@ def statics():
         charts.append({'id':'prioritychart','title':'Priority Distribution','labels':priority_labels,'values':priority_values,'type':'bar','indexAxis':'y'})
     except Exception as e:
         print(f"Error: {e}")
-    return render_template('statics.html', title="Statics",charts=charts, statics=statics, status='statics', summary=summary, streak=streak, name=name)
+    return render_template('statics.html', title="Statics",charts=charts, statics=statics, status='statics', summary=summary, name=name,streak=session['streak'])
 
 #!#! Projects sectiion 
 @app.route('/projects')
@@ -859,8 +859,8 @@ def projects():
         name = session['name']
         projects = Project.query.filter_by(user_id=session['user_id']).all()
     except Exception as e:
-        print(f"Error:9 {e}")
-    return render_template("projects/projects.html", projects=projects, name=name, title="Projects")
+        print(f"Error: {e}")
+    return render_template("projects/projects.html", projects=projects, name=name, title="Projects", streak=session['streak'])
         
 @app.route('/project/<int:project_id>')
 @login_required
@@ -870,7 +870,7 @@ def project(project_id):
         project = Project.query.filter_by(user_id=session['user_id'],id=project_id).first_or_404()
     except Exception as e:
         print(f"Error: {e}")
-    return render_template('projects/project.html',title=project.title, name=name, project=project, status="projects")
+    return render_template('projects/project.html',title=project.title, name=name, project=project, status="projects", streak=session['streak'])
 
 @app.route('/projects/new',methods=['POST','GET'])
 @login_required
@@ -891,12 +891,11 @@ def add_project():
             db.session.add(new_project)
             db.session.commit()
             flash("Project added successfully","success")
-        except Exception as d:
-            print(f"======={d}")
+        except:
             db.session.rollback()
             flash("Something went wrong","error")
         return redirect(url_for("project",project_id=new_project.id))
-    return render_template('projects/add_project.html', title='Add Project',name=name, submit_url=url_for("add_project"))
+    return render_template('projects/add_project.html', title='Add Project',name=name, submit_url=url_for("add_project"), streak=session['streak'])
 
 @app.route('/project/ai/new', methods=['POST'])
 @login_required
@@ -912,7 +911,6 @@ def quick_add_project():
         else:
             target_date = None
         ai_project = ai_models.project_creator({'title':title,'goal':goal,'description':description,'target date':target_date if target_date else 'None'})
-        print(ai_project)
         if ai_project != 'None':
             title = ai_project['title']
             goal = ai_project['goal']
@@ -935,11 +933,9 @@ def quick_add_project():
             db.session.commit()
             return redirect(url_for('project', project_id=new_project.id))
         else:
-            print('FAIL')
             flash('Cannot fulfit this request', 'error')
             return redirect(url_for('add_project'))
-    except Exception as e:
-        print(f"=========== {e}")
+    except:
         db.session.rollback()
         return redirect(url_for('add_project'),404)
 
@@ -982,9 +978,8 @@ def add_milestone(project_id):
                                     </form>
                                 </div></ul></div>'''
         return html_response,200
-    except Exception as e:
+    except:
         db.session.rollback()
-        print(e)
         return "",404
 
 @app.route('/milestone/<int:milestone_id>/task/new', methods=['POST'])
@@ -1056,7 +1051,7 @@ def edit_project(project_id):
         except:
             db.session.rollback()
             flash("Something went wrong", "error")
-    return render_template('projects/add_project.html', title="Edit Project",name=name,project=project, submit_url=url_for("edit_project",project_id=project_id))
+    return render_template('projects/add_project.html', title="Edit Project",name=name,project=project, submit_url=url_for("edit_project",project_id=project_id),streak=session['streak'])
 
 @app.route('/milestone/<int:milestone_id>/edit', methods=['POST'])
 @login_required
@@ -1133,7 +1128,6 @@ def complete_milestone(milestone_id):
         milestone.status = 'completed'
         for task in milestone.tasks:
             task.completed = True
-            print(f"task {task.id} completed")
         total_tasks = 0
         total_completed_tasks = 0
         for milestone in project.milestones:
@@ -1283,7 +1277,6 @@ def delete_milestone(milestone_id):
         html_response += f''' <div class="progress-container" id="project-progress-container-{project.id}" hx-swap-oob="true">
                                 <div class="progress-label"><strong>progress: </strong><span>{project_progress}%</span></div>
                                 <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: {project_progress}%; background-color:{color}"></div></div></div>'''
-        print(html_response)
         db.session.commit()
         return html_response,200
     except:
@@ -1360,7 +1353,6 @@ def check_task(milestone_id,task_id):
         total_milestone_tasks = Task.query.filter_by(user_id=session['user_id'], milestone_id=milestone_id).count()
         total_milestone_completed_tasks = Task.query.filter_by(user_id=session['user_id'], milestone_id=milestone_id, completed=True).count()
         progress = round((total_milestone_completed_tasks/total_milestone_tasks)*100,1)
-        print(f"============= {total_milestone_tasks} ============ {total_milestone_completed_tasks} ============ {progress}")
         milestone = Milestone.query.filter_by(user_id=session['user_id'], id=milestone_id).first_or_404()
         milestone.progress = progress
         total_tasks = 0
@@ -1457,7 +1449,6 @@ def uncheck_task(milestone_id,task_id):
         html_response += f'''<div class="progress-container" id="project-progress-container-{project.id}" hx-swap-oob="true">
                             <div class="progress-label"><strong>progress: </strong><span>{project_progress}%</span></div>
                             <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: {project_progress}%; background-color:{color}"></div></div></div>'''
-        print(html_response)
         return html_response,200
     except:
         db.session.rollback()
