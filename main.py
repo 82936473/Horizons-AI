@@ -157,7 +157,7 @@ def weekly_static():
                 statics=insights(user)
                 ai_email=ai_models.static_generator_message(statics)
                 email= render_template('weekly_static_table.html', static=statics, ai_output=ai_email)
-                message = Message(subject='Your Horizons AI weekly summary', sender="ayman.laa09@gmail.com",recipients=[user.username])
+                message = Message(subject='Your Smart Planner weekly summary', sender="ayman.laa09@gmail.com",recipients=[user.username])
                 email=transform(email)
                 message.html = email
                 mail.send(message)
@@ -176,7 +176,7 @@ scheduler.start()
 def greating_email(user_email,name):
     try:
         greating_email=f'''<p>Hi {name},</p>
-        <p>Welcome to <strong>Horizons AI</strong>! 🚀 Your new personal command center for organizing your tasks and staying productive.<p>
+        <p>Welcome to <strong>Smart Planner</strong>! 🚀 Your new personal command center for organizing your tasks and staying productive.<p>
         <p>Your account is officially ready✅. Here is what you can do <strong>right out of the gate</strong>:<p>
         <ul>
             <li>📝 <strong>Organize Your Tasks: Add your tasks, tag their priority levels, and categorize them to keep your workflow clean.</strong></li>
@@ -186,9 +186,9 @@ def greating_email(user_email,name):
         </ul>
         <p>👉 The board is clear and ready for your first task.<strong><a href="http://127.0.0.1:5000/dashboard" style="color: #007bff; font-weight: bold; text-decoration: underline;">Log in and start achieving your goals</a></strong></p>
         <p>Happy organizing,<br>
-        <strong>The Horizons AI Team.</strong>🌟</p>
+        <strong>The Smart Planner Team.</strong>🌟</p>
         '''
-        message = Message(subject='WELCOME TO HORIZONS AI!',sender='ayman.laa09@gmail.com',recipients=[user_email])
+        message = Message(subject='WELCOME TO Smart Planner!',sender='ayman.laa09@gmail.com',recipients=[user_email])
         message.html = greating_email
         mail.send(message)
     except Exception as e:
