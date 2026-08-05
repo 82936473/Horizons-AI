@@ -51,25 +51,25 @@
                     <div class="task-title">
                         <div class="d-flex flex-wrap align-items-center gap-3 mt-2">
                             {% if task.due_date %}
-                                <span class="badge bg-light text-secondary border d-inline-flex align-items-center gap-1 py-1.5 px-2.5 rounded-pill" style="font-size: 0.8rem;"><i class="bi bi-calendar-event"></i><strong>Due date: </strong>{{ task.friendly_date }}</span>
+                                <span class="badge bg-light text-secondary border d-inline-flex align-items-center gap-1 py-1 px-1 rounded-pill" style="font-size: 0.8rem;"><i class="bi bi-calendar-event"></i><strong>Due date: </strong>{{ task.friendly_date }}</span>
                                 <span class="text-muted d-none d-sm-inline">•</span>
                             {% endif %}
                             {% if task.category %}
-                                <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle d-inline-flex align-items-center gap-1 py-2 px-3 rounded-pill"><i class="bi bi-tag"></i><strong>Category: </strong>{{ task.category }}</span>
+                                <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle d-inline-flex align-items-center gap-1 py-1 px-1 rounded-pill"><i class="bi bi-tag"></i><strong>Category: </strong>{{ task.category }}</span>
                                 <span class="text-muted d-none d-sm-inline">•</span>
                             {% endif %}
                             {% if task.priority.lower() == 'high' %}
-                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle d-inline-flex align-items-center gap-1 py-2 px-3 rounded-pill" style="font-size: 0.8rem;">
+                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle d-inline-flex align-items-center gap-1 py-1 px-1 rounded-pill" style="font-size: 0.8rem;">
                                     <span class="rounded-circle bg-danger" style="width: 6px; height: 6px;"></span>
                                     High Priority
                                 </span>
                             {% elif task.priority.lower() == 'medium' %}
-                                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle d-inline-flex align-items-center gap-1 py-2 px-3 rounded-pill" style="font-size: 0.8rem;">
+                                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle d-inline-flex align-items-center gap-1 py-1 px-1 rounded-pill" style="font-size: 0.8rem;">
                                     <span class="rounded-circle bg-warning" style="width: 6px; height: 6px;"></span>
                                     Medium Priority
                                 </span>
                             {% else %}
-                                <span class="badge bg-success-subtle text-success border border-success-subtle d-inline-flex align-items-center gap-1 py-2 px-3 rounded-pill" style="font-size: 0.8rem;">
+                                <span class="badge bg-success-subtle text-success border border-success-subtle d-inline-flex align-items-center gap-1 py-1 px-1 rounded-pill" style="font-size: 0.8rem;">
                                     <span class="rounded-circle bg-success" style="width: 6px; height: 6px;"></span>
                                     Low Priority
                                 </span>
@@ -101,25 +101,25 @@
                                     <div class="task-title">
                                         <div class="d-flex flex-wrap align-items-center gap-3 mt-2">
                                             {% if subtask.due_date %}
-                                                <span class="badge bg-light text-secondary border d-inline-flex align-items-center gap-1 py-1.5 px-2.5 rounded-pill" style="font-size: 0.8rem;"><i class="bi bi-calendar-event"></i><strong>Due date: </strong>{{ subtask.friendly_date }}</span>
+                                                <span class="badge bg-light text-secondary border d-inline-flex align-items-center gap-1 py-1 px-1 rounded-pill" style="font-size: 0.8rem;"><i class="bi bi-calendar-event"></i><strong>Due date: </strong>{{ subtask.friendly_date }}</span>
                                                 <span class="text-muted d-none d-sm-inline">•</span>
                                             {% endif %}
                                             {% if subtask.category %}
-                                                <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle d-inline-flex align-items-center gap-1 py-1.5 px-2.5 rounded-pill"><i class="bi bi-tag"></i><strong>Category: </strong>{{ task.category }}</span>
+                                                <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle d-inline-flex align-items-center gap-1 py-1 px-1 rounded-pill"><i class="bi bi-tag"></i><strong>Category: </strong>{{ task.category }}</span>
                                                 <span class="text-muted d-none d-sm-inline">•</span>
                                             {% endif %}
                                                 {% if subtask.priority.lower() == 'high' %}
-                                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle d-inline-flex align-items-center gap-1 py-1.5 px-2.5 rounded-pill" style="font-size: 0.8rem;">
+                                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle d-inline-flex align-items-center gap-1 py-1 px-1 rounded-pill" style="font-size: 0.8rem;">
                                                         <span class="rounded-circle bg-danger" style="width: 6px; height: 6px;"></span>
                                                         High Priority
                                                     </span>
                                                 {% elif subtask.priority.lower() == 'medium' %}
-                                                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle d-inline-flex align-items-center gap-1 py-1.5 px-2.5 rounded-pill" style="font-size: 0.8rem;">
+                                                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle d-inline-flex align-items-center gap-1 py-1 px-1 rounded-pill" style="font-size: 0.8rem;">
                                                         <span class="rounded-circle bg-warning" style="width: 6px; height: 6px;"></span>
                                                         Medium Priority
                                                     </span>
                                                 {% else %}
-                                                    <span class="badge bg-success-subtle text-success border border-success-subtle d-inline-flex align-items-center gap-1 py-1.5 px-2.5 rounded-pill" style="font-size: 0.8rem;">
+                                                    <span class="badge bg-success-subtle text-success border border-success-subtle d-inline-flex align-items-center gap-1 py-1 px-1 rounded-pill" style="font-size: 0.8rem;">
                                                         <span class="rounded-circle bg-success" style="width: 6px; height: 6px;"></span>
                                                         Low Priority
                                                     </span>

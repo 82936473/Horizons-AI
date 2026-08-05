@@ -1,3 +1,6 @@
+.menu-button{
+    display:none
+}
 .sidebar{
     box-sizing:border-box;
     position:sticky;
@@ -6,7 +9,7 @@
     height:calc(100vh - 20px);
     margin:5px;
     padding:10px;
-    background:hsla(0, 0%, 0%, 0.068);
+    background:white;
     border-radius:8px;
     border-right:5px solid #7c7b7b;
     overflow:hidden;
@@ -14,22 +17,17 @@
     flex-shrink:0;
 }
 
-@media (hover:hover){
+@media (min-width:800px) and (hover:hover){
     .sidebar:hover{
         width:250px;
+        margin-right:0px;
     }
-}
-@media (hover:hover){
     .sidebar:hover #toggle-btn svg{
         transform: rotate(180deg)
     }
+    .sidebar:hover span{display:inline;}
 }
 .sidebar span{ display:none; }
-@media (hover: hover){
-
-    .sidebar:hover span{display:inline;}
-
-}
 .sidebar.open span{
     display:inline;
 }
@@ -160,3 +158,54 @@ li.bottom-item:first-of-type,li.profile{
     color: #000000b0;
     letter-spacing: -0.5px;
 }
+    @media (max-width: 800px){
+        .sidebar{
+            z-index: -1;
+            position:fixed;
+            top:0;
+            left:0;
+            opacity:0;
+            pointer-events: none;
+            transform: translateX(-100%);
+            transition: 300ms ease;}
+        .menu-button{
+            display: block;
+            position:fixed;
+            border:none;
+            border-radius: 6px;
+            background-color: rgb(196, 196, 196);
+            top:10px;
+            left:15px;
+            z-index:1000;
+        }
+        .sidebar.active{
+            position:fixed;
+            top:0;
+            left:0;
+            width:250px;
+            max-width: 250px;
+            opacity: 1;
+            pointer-events:auto;
+            transform: translateX(0);
+            z-index:1000;
+        }
+        .sidebar.active #toggle-btn svg{
+            transform: rotate(180deg)
+        }
+        .sidebar.active span{display:inline;}
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            z-index: 1000;
+        }
+        .sidebar-overlay.active {
+            display: block;
+        }
+    }

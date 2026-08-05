@@ -36,13 +36,13 @@
                 <div class="task-title">
                     <div class="d-flex flex-wrap align-items-center gap-3 mt-2">
                         {% if task.due_date %}
-                              <span class="badge bg-light text-secondary border d-inline-flex align-items-center gap-1 py-1.5 px-2.5 rounded-pill" style="font-size: 0.8rem;"><i class="bi bi-calendar-event"></i><strong>Due date:</strong> {{ task.due_date }}</span>
+                              <span class="badge bg-light text-secondary border d-inline-flex align-items-center gap-1 py-1 px-1 rounded-pill" style="font-size: 0.8rem;"><i class="bi bi-calendar-event"></i><strong>Due date:</strong> {{ task.due_date }}</span>
                               <span class="text-muted d-none d-sm-inline">•</span>
                         {% endif %}
-                        <span class="badge bg-success-subtle text-success border border-success-subtle d-inline-flex align-items-center gap-1 py-1.5 px-2.5 rounded-pill" style="font-size: 0.8rem;"><span class="rounded-circle bg-success" style="width: 6px; height: 6px;"></span>Completed</span>
+                        <span class="badge bg-success-subtle text-success border border-success-subtle d-inline-flex align-items-center gap-1 py-1 px-1 rounded-pill" style="font-size: 0.8rem;"><span class="rounded-circle bg-success" style="width: 6px; height: 6px;"></span>Completed</span>
                         {% if task.formatted_time_left %}
                         <span class="text-muted d-none d-sm-inline">•</span>
-                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle d-inline-flex align-items-center gap-1 py-1.5 px-2.5 rounded-pill" style="font-size: 0.8rem;"><span class="rounded-circle bg-danger" style="width: 6px; height: 6px;"></span>Expires in : {{task.formatted_time_left}}</span>
+                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle d-inline-flex align-items-center gap-1 py-1 px-1 rounded-pill" style="font-size: 0.8rem;"><span class="rounded-circle bg-danger" style="width: 6px; height: 6px;"></span>Expires in : {{task.formatted_time_left}}</span>
                         {% endif %}
                     </div>
                 </div>

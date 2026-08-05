@@ -9,7 +9,7 @@
     display:flex;
     flex-direction:column;
     align-items:center;
-    margin-top:30px;
+    margin-top:50px;
 }
 
 .dropdown-content svg,.delete-all-tasks svg,.toolbar svg{
@@ -155,9 +155,10 @@
         opacity:0;}
 }
 .delete-all-tasks{
+    background-color: rgb(235, 231, 231);
     position:absolute;
     top:10px;
-    right:40px;
+    right:20px;
     border-radius: 4px;
 }
 .delete-all-tasks a{
@@ -166,7 +167,6 @@
     align-items: center;
     padding:5px 16px;
     text-decoration:none;
-    background-color: white;
     color:black;
 }
 .delete-all-tasks :hover{
@@ -190,4 +190,12 @@
     align-items: center;
     min-height: 70vh;
     gap: 10px;
+}
+@media (hover:none){
+    .delete-all-tasks{
+    background:#3d3d3d;
+    }
+    .delete-all-tasks a{
+        color:white;
+    }
 }

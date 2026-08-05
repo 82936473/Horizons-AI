@@ -65,7 +65,7 @@
                             <div class="title-wrapper">
                                 <div id="edit-milestone-title-{{milestone.id}}">
                                     <span id="milestone-title-{{milestone.id}}">{{ milestone.title }}</span>
-                                    <form hx-post="{{ url_for('edit_milestone', milestone_id=milestone.id) }}" hx-target="#edit-milestone-title-{{milestone.id}}" hx-indicator="#spinner" style="width: 600px;" class="add-section" id="milestone-title-form-{{milestone.id}}">
+                                    <form hx-post="{{ url_for('edit_milestone', milestone_id=milestone.id) }}" hx-target="#edit-milestone-title-{{milestone.id}}" hx-indicator="#spinner" class="add-section" id="milestone-title-form-{{milestone.id}}">
                                         <input type="text" name="title" placeholder="{{milestone.title}}" required>
                                         <button type="submit"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z"/></svg></button>
                                         <button type="button" onclick="CancelEditTitle({{milestone.id}})"><svg xmlns="http://www.w3.org/2000/svg" height="27px" viewBox="0 -960 960 960" width="27px" fill="#000000"><path d="m336-280-56-56 144-144-144-143 56-56 144 144 143-144 56 56-144 143 144 144-56 56-143-144-144 144Z"/></svg></button>
