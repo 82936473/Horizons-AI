@@ -20,17 +20,22 @@
 }
 .project{
     display:flex;
-    align-items: center;
     min-height:100vh;
 }
 .content{
     flex:1;
     font-family: 'Plus Jakarta Sans', sans-serif;
+    width:100%;
     margin-top:50px;
     padding:5px;
     display:flex;
     flex-direction: column;
     align-items: stretch;
+}
+.project-title,.goal, .description, .milestone-title, .task-title{
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: anywhere;
 }
 .project-infos{
     max-width:500px;
@@ -43,7 +48,7 @@
 }
 .header{
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     justify-content: space-between;
 }
 .status{
@@ -259,20 +264,25 @@ svg{
 }
 .add_milestone{
     align-self: center;
-    margin-right: 35px;
     max-width:300px;
 }
 .add-section{
     display:none;
-    flex-direction:row;
-    width:auto;
+    width:100%;
 }
 .add-section input{
     height: auto;
-    width:85%;
+    width:100%;
     border:none;
     border-bottom: 1px solid rgba(0, 0, 0, 0.164);
     background:transparent;
+}
+.add-milestone-section{
+    justify-content: center;
+    width:40%;
+}
+.add-milestone-section form,.add-milestone-section input{
+    width:100%;
 }
 .add-section input:focus{
     outline: none;
@@ -304,6 +314,17 @@ button{
     animation:fadeOut 5s forwards;
     animation: slideInOut 5s ease forwards;
 }
+.form-buttons{
+    margin-top:10px;
+    display:flex;
+    gap:20px;
+    align-items:center;
+    justify-content: center;
+}
+.form-buttons button{
+    border: 1px solid rgb(204, 201, 201);
+    border-radius:10px;
+}
 @keyframes slideInOut{
     0%{
         transform:translateX(120%);
@@ -324,4 +345,9 @@ button{
 @keyframes loadbar-slide {
     0% {left:-35%;}
     100% {left:100%;}
+}
+@media (max-width:630px){
+    .add-milestone-section{
+        width:90%;
+    }
 }

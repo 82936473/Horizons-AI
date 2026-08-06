@@ -4,34 +4,42 @@
     background: #f4f6f8;
 }
 .header{
+    display:flex;
+    flex-direction: column;
     margin-top:10px;
     margin-bottom:20px;
-    text-align: center;
 }
 .title h2{
     color:rgb(124, 124, 123)
 }
 .title{
     margin-bottom: 40px;
+    text-align: center;
 }
 .statics{
+    min-width:0;
     flex:1;
     display: flex;
     align-items:center;
     flex-direction: column;
-    padding-left: clamp(0vw, 6vw, 200px);
-    margin-right: clamp(1px, 6vw, 200px);
+    padding:0;
+    margin:3px;
+    margin-top:47px;
+    align-items: center;
     }
 .statics-container{
     font-family: "Poppins", sans-serif;
     display:flex;
     flex-wrap: wrap;
-    gap:10px;
+    justify-content: center;
+    gap:20px;
     height: auto;
     margin-bottom: 30px;
 }
 .summary-card{
-    max-width:900px;
+    width:600;
+    max-width:100%;
+    box-sizing:border-box;
     margin:0 auto 30px;
     padding:24px;
     background: #f3f0ff;
@@ -109,6 +117,7 @@ svg{
 }
 .charts-container{
     display:flex;
+    justify-content: center;
     font-family: "Poppins", sans-serif;
     flex-wrap: wrap;
     flex-grow: 1;
@@ -121,10 +130,11 @@ svg{
     border: 1px solid #e2e8f0;
     background:white;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
-    width : fit-content;
+    width : auto;
+    max-width:100%;
     height: fit-content;
     transition:.2s ease;
-    padding:24px;
+    padding:5px;
 
 }
 .chart-container h3{
@@ -135,14 +145,36 @@ svg{
     max-height: 250px;
     max-width: 250px; 
 }
-@media (max-width: 768px) {
-    .static-item {
-        flex: 1 1 100%;
-        width: 100%;
-    }
-}
 @media (hover:none){
     .static-item{
         height: 120px;
+    }
+}
+@media (max-width: 1300px){
+    .static-item{
+        flex: 0 0 calc((100% - 40px)/ 3);
+        max-width: calc((100% - 40px)/ 3);
+    }
+}
+@media (max-width: 1000px) {
+    .static-item {
+        flex: 0 0 calc((100% - 20px) / 2);
+        max-width: calc((100% - 20px) / 2);
+    }
+}
+@media (max-width: 600px) {
+    .static-item {
+        flex:1 1 100%;
+        max-width: 100%;
+    }
+    .charts-container{
+        padding:2px;
+    }
+    .chart-container{
+        width:100%;
+        box-sizing: border-box;
+    }
+    .chart-canvas{
+        max-width:100% !important;
     }
 }

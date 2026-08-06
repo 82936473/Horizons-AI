@@ -12,7 +12,7 @@ from ai_models import AIModels
 from email_validator import validate_email,EmailNotValidError
 import os
 app = Flask(__name__)
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=1)
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
 load_dotenv()
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
@@ -184,7 +184,7 @@ def greating_email(user_email,name):
             <li>📈 <strong>Unlock Weekly Insights: Our background system calculates your stats every single week, showing you your average completion times and top categories.</strong></li>
             <li>🤖 <strong>Enjoy you journey powered by AI.</strong></li>
         </ul>
-        <p>👉 The board is clear and ready for your first task.<strong><a href="http://127.0.0.1:5000/dashboard" style="color: #007bff; font-weight: bold; text-decoration: underline;">Log in and start achieving your goals</a></strong></p>
+        <p>👉 The board is clear and ready for your first task.<strong><a href="http://smartplanner.ayman.hackclub.app/dashboard" style="color: #007bff; font-weight: bold; text-decoration: underline;">Log in and start achieving your goals</a></strong></p>
         <p>Happy organizing,<br>
         <strong>The Smart Planner Team.</strong>🌟</p>
         '''
@@ -334,6 +334,7 @@ def quickadd():
         prompt=request.form.get('quickadd_prompt')
         tasks=ai_models.quick_add(prompt)
         created_tasks=[]
+        print(tasks)
         if not tasks:
             response = make_response("",200)
             response.headers['HX-Trigger'] = 'quick_add_error'
@@ -933,7 +934,7 @@ def quick_add_project():
             db.session.commit()
             return redirect(url_for('project', project_id=new_project.id))
         else:
-            flash('Cannot fulfit this request', 'error')
+            flash('Cannot fulfill this request', 'error')
             return redirect(url_for('add_project'))
     except:
         db.session.rollback()
@@ -950,13 +951,15 @@ def add_milestone(project_id):
         db.session.add(new_milestone)
         db.session.commit()
         html_response = ''
-        html_response += f'''<div class="milestone-container" id="milestone-{new_milestone.id}"> <div class="milestone-header"> <div class="title-wrapper">
+        html_response += f'''<div style="border:1px solid {project.color}" class="milestone-container" id="milestone-{new_milestone.id}"> <div class="milestone-header"> <div class="title-wrapper">
                         <div id="edit-milestone-title-{new_milestone.id}">
-                            <span id="milestone-title-{new_milestone.id}">{ title }</span>
-                            <form hx-post="{url_for('edit_milestone', milestone_id=new_milestone.id)}" hx-tigger="change" hx-target="#edit-milestone-title-{new_milestone.id}" hx-indicator="#spinner" style="width:600px;" class="add-section" id=milestone-title-form-{new_milestone.id}>
+                            <span class="milestone-title" id="milestone-title-{new_milestone.id}">{ title }</span>
+                            <form hx-post="{url_for('edit_milestone', milestone_id=new_milestone.id)}" hx-target="#edit-milestone-title-{new_milestone.id}" hx-indicator="#spinner" class="add-section" id=milestone-title-form-{new_milestone.id}>
                                 <input type="text" name="title" placeholder="{title}" required>
-                                <button type="submit"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z"/></svg></button>
-                                <button type="button" onclick="cancelEditTitle({new_milestone.id})"><svg xmlns="http://www.w3.org/2000/svg" height="27px" viewBox="0 -960 960 960" width="27px" fill="#000000"><path d="m336-280-56-56 144-144-144-143 56-56 144 144 143-144 56 56-144 143 144 144-56 56-143-144-144 144Z"/></svg></button>
+                                <div class="form-buttons">
+                                    <button type="submit"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z"/></svg></button>
+                                    <button type="button" onclick="cancelEditTitle({new_milestone.id})"><svg xmlns="http://www.w3.org/2000/svg" height="27px" viewBox="0 -960 960 960" width="27px" fill="#000000"><path d="m336-280-56-56 144-144-144-143 56-56 144 144 143-144 56 56-144 143 144 144-56 56-143-144-144 144Z"/></svg></button>
+                                </div>
                             </form>
                         </div>
                         <div class="dropdown">
@@ -969,14 +972,17 @@ def add_milestone(project_id):
         html_response += f'''<div class="progress-container" id="milestone-progress-container-{new_milestone.id}"> <div class="progress-label"> <strong>progress: </strong> <span>0.0%</span> </div> <div class="progress-bar-bg"> <div class="progress-bar-fill" style="width: 0%;"></div></div></div>'''
         html_response += f'''<ul class="tasks-tree hide-tasks">
                                 <a class="btn btn-secondary add-task" onclick="toggleTaskForm({new_milestone.id})"><svg xmlns="http://www.w3.org/2000/svg" height="18px" viewBox="0 -960 960 960" width="18px" fill="#000000"><path d="M440-120v-320H120v-80h320v-320h80v320h320v80H520v320h-80Z"/></svg><span>New task</span></a>
-                                <div id="tasks-{new_milestone.id}"></div>
                                 <div class="add-section" id="task-form-{ new_milestone.id }">
                                     <form hx-post="{ url_for('add_milestone_task', milestone_id=new_milestone.id) }" hx-target="#tasks-{ new_milestone.id }" hx-swap="beforeend" hx-on::after-request="this.reset(); this.parentElement.style.display='none'" hx-indicator="#spinner">
                                         <input type="text" name="task" required>
-                                        <button type="submit"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z"/></svg></button>
-                                        <button type="button" onclick="CancelAddTask({new_milestone.id})"><svg xmlns="http://www.w3.org/2000/svg" height="27px" viewBox="0 -960 960 960" width="27px" fill="#000000"><path d="m336-280-56-56 144-144-144-143 56-56 144 144 143-144 56 56-144 143 144 144-56 56-143-144-144 144Z"/></svg></button>
+                                        <div class="form-buttons">
+                                            <button type="submit"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z"/></svg></button>
+                                            <button type="button" onclick="CancelAddTask({new_milestone.id})"><svg xmlns="http://www.w3.org/2000/svg" height="27px" viewBox="0 -960 960 960" width="27px" fill="#000000"><path d="m336-280-56-56 144-144-144-143 56-56 144 144 143-144 56 56-144 143 144 144-56 56-143-144-144 144Z"/></svg></button>
+                                        </div>
                                     </form>
-                                </div></ul></div>'''
+                                </div>
+                                <div id="tasks-{new_milestone.id}"></div>
+                                </ul></div>'''
         return html_response,200
     except:
         db.session.rollback()
@@ -1014,7 +1020,7 @@ def add_milestone_task(milestone_id):
                             </div>'''
         html_response += f'''
         <li class="task" id="task-{new_task.id}"> <div class="task-wrapper">
-        <div><input type="checkbox" name="{ new_task.id }" value="true" hx-post="{url_for('check_task', milestone_id=milestone_id, task_id=new_task.id)}" hx-trigger="change" hx-target="#task-{new_task.id}" hx-indicator="#spinner"><span>{task}</span></div>
+        <div><input type="checkbox" name="{ new_task.id }" value="true" hx-post="{url_for('check_task', milestone_id=milestone_id, task_id=new_task.id)}" hx-trigger="change" hx-target="#task-{new_task.id}" hx-indicator="#spinner"><span class="task-title">{task}</span></div>
         <button hx-delete="{url_for('delete_milestone_task',task_id=new_task.id)}" hx-target="#task-{new_task.id}" hx-swap="delete swap:200ms" hx-confirm="Are you sure you want to delete this task" hx-indicator="#spinner" class=""><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z"/></svg></button>
         </div></li>
         <div class="progress-container" id="milestone-progress-container-{milestone_id}" hx-swap-oob="true">
@@ -1061,11 +1067,13 @@ def edit_milestone(milestone_id):
         title = request.form['title']
         milestone.title = title
         db.session.commit()
-        html_response = f'''<span id="milestone-title-{milestone_id}">{ title }</span>
+        html_response = f'''<span class="milestone-title" id="milestone-title-{milestone_id}">{ title }</span>
                             <form hx-post="{ url_for('edit_milestone', milestone_id=milestone_id) }" hx-tigger="change" hx-target="#edit-milestone-title-{milestone_id}" style="width: 600px;" class="add-section" id="milestone-title-form-{milestone_id}">
                                 <input type="text" name="title" placeholder="title" required>
-                                <button type="submit"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z"/></svg></button>
-                                <button type="button" onclick="CancelEditTitle({milestone_id})"><svg xmlns="http://www.w3.org/2000/svg" height="27px" viewBox="0 -960 960 960" width="27px" fill="#000000"><path d="m336-280-56-56 144-144-144-143 56-56 144 144 143-144 56 56-144 143 144 144-56 56-143-144-144 144Z"/></svg></button>
+                                <div class="form-buttons">
+                                    <button type="submit"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z"/></svg></button>
+                                    <button type="button" onclick="CancelEditTitle({milestone_id})"><svg xmlns="http://www.w3.org/2000/svg" height="27px" viewBox="0 -960 960 960" width="27px" fill="#000000"><path d="m336-280-56-56 144-144-144-143 56-56 144 144 143-144 56 56-144 143 144 144-56 56-143-144-144 144Z"/></svg></button>
+                                </div>
                             </form>'''
         return html_response,200
     except:
@@ -1395,7 +1403,7 @@ def check_task(milestone_id,task_id):
                                     <a hx-delete="{ url_for('delete_milestone', milestone_id=milestone_id) }" hx-target="#milestone-{ milestone_id }" hx-swap="delete swap:200ms"  hx-confirm="Please confirm the deleting?" hx-indicator="#spinner" class=""><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24"><path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360Z"/></svg><span>Delete</span></a>
                                 </div>'''
         html_response += f'''<div class="task-wrapper">
-        <div><input type="checkbox" name="{ task_id }" value="true" hx-post="{url_for('uncheck_task', milestone_id=milestone_id, task_id=task_id)}" hx-trigger="change" hx-target="#task-{task_id}" hx-indicator="#spinner" checked><span>{task.title}</span></div>
+        <div><input type="checkbox" name="{ task_id }" value="true" hx-post="{url_for('uncheck_task', milestone_id=milestone_id, task_id=task_id)}" hx-trigger="change" hx-target="#task-{task_id}" hx-indicator="#spinner" checked><span class="task-title">{task.title}</span></div>
         <button hx-delete="{url_for('delete_milestone_task',task_id=task_id)}" hx-target="#task-{task_id}" hx-swap="delete swap:200ms" hx-confirm="Are you sure you want to delete this task" hx-indicator="#spinner" class=""><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z"/></svg></button>
         </div>
         <div class="progress-container" id="milestone-progress-container-{milestone_id}" hx-swap-oob="true">
@@ -1440,7 +1448,7 @@ def uncheck_task(milestone_id,task_id):
                                 <a hx-delete="{ url_for('delete_milestone', milestone_id=milestone_id) }" hx-target="#milestone-{ milestone_id }" hx-swap="delete swap:200ms"  hx-confirm="Please confirm the deleting?" hx-indicator="#spinner" class=""><svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24"><path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360Z"/></svg><span>Delete</span></a>
                             </div>'''
         html_response += f'''<div class="task-wrapper">
-        <div><input type="checkbox" name="{ task_id }" value="true" hx-post="{url_for('check_task', milestone_id=milestone_id, task_id=task_id)}" hx-trigger="change" hx-target="#task-{task_id}" hx-indicator="#spinner"><span>{task.title}</span></div>
+        <div><input type="checkbox" name="{ task_id }" value="true" hx-post="{url_for('check_task', milestone_id=milestone_id, task_id=task_id)}" hx-trigger="change" hx-target="#task-{task_id}" hx-indicator="#spinner"><span class="task-title">{task.title}</span></div>
         <button hx-delete="{url_for('delete_milestone_task',task_id=task_id)}" hx-target="#task-{task_id}" hx-swap="delete swap:200ms" hx-confirm="Are you sure you want to delete this task" hx-indicator="#spinner" class=""><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z"/></svg></button>
         </div>
         <div class="progress-container" id="milestone-progress-container-{milestone_id}" hx-swap-oob="true">
@@ -1471,5 +1479,6 @@ with app.app_context():
     else:
         db.create_all()
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    app.run(debug=True)
+    # app.run(host="0.0.0.0", port=5000)
     print("================ Application Stoped ================")

@@ -10,7 +10,7 @@
         <div class="loadbar-fill"></div>
     </div>
     <form class="quickadd" hx-post="{{url_for('quickadd')}}" hx-target="#tasks-container" hx-swap="beforeend settle:200ms" onsubmit="setTimeout(() => {this.reset(); const ta = this.querySelector('.quickadd_prompt'); if(ta) ta.style.height = '36px'; }, 50)">
-        <textarea class="quickadd_prompt" name="quickadd_prompt" placeholder="Describe your task here" rows="1"  required oninput="this.style.height = '36px'; this.style.height = this.scrollHeight + 'px';"></textarea>
+        <textarea class="quickadd_prompt" name="quickadd_prompt" placeholder="Quick add with AI" rows="1"  required oninput="this.style.height = '36px'; this.style.height = this.scrollHeight + 'px';"></textarea>
         <button type="submit" class="submit_prompt"><span class="btn-text">Send</span></button>
     </form>
     <main class="content" id="tasks-container">

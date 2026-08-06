@@ -369,7 +369,7 @@
 }
 .quickadd{
     position:fixed;
-    bottom:25px;
+    bottom:5px;
     left:calc(50% + 60px);
     transform: translateX(-50%);
     width: 90%;
@@ -395,6 +395,12 @@
     overflow: hidden;
 }
 @media (max-width: 800px) {
+    .sortby span{
+        font-size:medium;
+    }
+    .sortby svg{
+        margin:0;
+    }
     .quickadd {
         max-width: 345px;
         left:50%;

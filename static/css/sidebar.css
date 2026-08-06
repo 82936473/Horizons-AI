@@ -15,12 +15,17 @@
     overflow:hidden;
     transition:300ms ease;
     flex-shrink:0;
+    overflow-y: auto;
 }
 
 @media (min-width:800px) and (hover:hover){
     .sidebar:hover{
         width:250px;
         margin-right:0px;
+        z-index:9999;
+    }
+    .sidebar:hover .h-line{
+        margin-top:0;
     }
     .sidebar:hover #toggle-btn svg{
         transform: rotate(180deg)
@@ -51,7 +56,9 @@
     justify-content:flex-end;
     margin-bottom:15px;
 }
-
+.sidebar .h-line{
+    margin-bottom:50px;
+}
 #toggle-btn{
     width:45px;
     height:45px;
@@ -89,14 +96,12 @@
     transition:.2s;
 }
 .streak-badge{
+    height:24px;
     margin-left:50px;
-    margin-bottom: 15px;
+    margin-top:10px;
 }
 .sidebar a:hover{
     background:#d9d9d9;
-    .sidebar{
-        width:250;
-    }
 }
 
 .sidebar_dash-dashboard,.sidebar_add-add_task,.sidebar_comp-completed_tasks,.sidebar_statics-statics,.sidebar_projects-projects{
@@ -118,10 +123,6 @@
     white-space:nowrap;
 }
 
-.sidebar.collapsed span{
-    display:none;
-}
-
 .sidebar.collapsed a{
     justify-content:center;
 }
@@ -132,22 +133,19 @@
     margin-top: auto;
 }
 .profile {
-    margin-top: auto;
     display: flex;
     align-items: center;
     gap: 15px;
     padding: 14px 14px;
-    margin-bottom: 8px;
     border-radius: 8px;
     color: #333;
     transition: .2s;
-    cursor: default;
+    cursor: default; 
+    user-select: none; 
+    color: #6c757d;
 }
 
-.profile:hover {
-    background: #d9d9d9;
-}
-li.bottom-item:first-of-type,li.profile{
+li.bottom-item{
     margin-top: auto;
 }
 .app-title {
