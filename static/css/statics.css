@@ -51,12 +51,14 @@
 }
 
 .summary-header{
+    text-align:center;
     font-size:18px;
     font-weight:700;
     margin-bottom:12px;
 }
 
 .summary-content{
+    text-align: center;
     color:#4b5563;
     line-height:1.7;
 }
