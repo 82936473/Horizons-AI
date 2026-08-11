@@ -42,13 +42,15 @@ def login_required(f):
             return redirect(url_for("log_in"))
         return f(*args, **kwargs)
     return decorated_function
-def update_streak(user):
+def update_streak():
+    user = User.query.filter_by(id=session['user_id'])
     try:
         now = datetime.now(timezone.utc)
         today = now.date()
         if not user.last_login:
             user.streak = 1
             user.last_login = now
+            session["streak"]=user.streak
             db.session.commit()
             return
         else:
@@ -62,6 +64,7 @@ def update_streak(user):
             else:
                 user.streak = 1
                 user.last_login = now
+        session['streak']=user.streak
         db.session.commit()
     except:
         db.session.rollback()
@@ -275,9 +278,9 @@ def log_in():
 @app.route("/dashboard")
 @login_required
 def dashboard():
+    update_streak()
     sort = request.args.get("sort", "date")
     user = User.query.filter_by(id=session["user_id"]).first()
-    update_streak(user)
     if user is None:
         session.clear()
         return redirect(url_for("log_in"))
@@ -294,6 +297,7 @@ def dashboard():
 @app.route("/task/new", methods=['GET','POST'])
 @login_required
 def add_task():
+    update_streak()
     name=session['name']
     if request.method == "POST":
         try:
@@ -762,6 +766,7 @@ def complete_subtask(subtask_id):
 @app.route('/completed')
 @login_required
 def completed_tasks():
+    update_streak()
     try:
         name = session['name']
         purge_expired_tasks()
@@ -830,6 +835,7 @@ def cancel_break_down():
 @app.route('/statics')
 @login_required
 def statics():
+    update_streak()
     try: 
         user=User.query.filter_by(id=session['user_id']).first_or_404()
         name = session['name']
@@ -856,6 +862,7 @@ def statics():
 @app.route('/projects')
 @login_required
 def projects():
+    update_streak()
     try:
         name = session['name']
         projects = Project.query.filter_by(user_id=session['user_id']).all()
@@ -1068,7 +1075,7 @@ def edit_milestone(milestone_id):
         milestone.title = title
         db.session.commit()
         html_response = f'''<span class="milestone-title" id="milestone-title-{milestone_id}">{ title }</span>
-                            <form hx-post="{ url_for('edit_milestone', milestone_id=milestone_id) }" hx-tigger="change" hx-target="#edit-milestone-title-{milestone_id}" style="width: 600px;" class="add-section" id="milestone-title-form-{milestone_id}">
+                            <form hx-post="{ url_for('edit_milestone', milestone_id=milestone_id) }" hx-target="#edit-milestone-title-{milestone_id}" hx-indicator="#spinner" class="add-section" id="milestone-title-form-{milestone_id}">
                                 <input type="text" name="title" placeholder="title" required>
                                 <div class="form-buttons">
                                     <button type="submit"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z"/></svg></button>
