@@ -149,9 +149,9 @@
 
         function showFlash(message) {
             const container = document.getElementById("flash-container");
+            container.innerHTML = ""
             const flash = document.createElement("div");
             flash.className = "flash";
-
             flash.innerHTML = `
                 <button class="btn btn-primary">
                     ${message}

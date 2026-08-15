@@ -3,7 +3,12 @@
  note: This project is for Horizons.
 
 --------------
+## Why I built it:
 
+before knowing Horizons, I created a basic terminal application that manage tasks and store all the data in csv files, but after knowing Hackclub, I had the motivation to push my project to the edge and create my own completed website
+
+
+--------------
 ## Project evolution
 v1 : Basic terminal application using interactive key prompts like (yes,no).  
 v2 : command lines interface like git.   
@@ -29,7 +34,8 @@ v3 : Full web interface built with Flask, moving from CSV to SQLAlchemy & SQLite
 ## How it works
 In the first time trying the application, you should sign up by dropping your email, creating a password, and choose a name.  
 You'll receive a greeting email and you'll have a personal account protected by password hashing.
-After logging in, you can scroll between pages and manage your tasks, projects, and view statistics easily, plus using ai to to make that more easier and fast.
+After logging in, you can scroll between pages and manage your tasks, projects, and view statistics easily, plus using ai to to make that more easier and fast.  
+Get a weekly email summary for your last actions.
 
 --------------
 
@@ -44,7 +50,7 @@ pip install -r requirements.txt
 ```
 Create .env file and fill the variables
 ```bash
-API_KEY = your_groq_api_key #the application use Groq, you can change that in the main.py file
+API_KEY = your_groq_api_key #the application use Groq, you can change that in the ai_models.py file
 RESET_DB = False #Put True if you want to clean the database everytime tou restart the application
 SECRET_KEY = long_secret_key_for_flask_session_security
 address_email = your_private_address_email
@@ -57,21 +63,18 @@ python main.py
 --------------
 
 ## Future improvements
-* Multiple languages.
-* Dark mode.
-* ADD Date and time for tasks instead of Date only.
+* multiple languages.
+* dark mode.
+* add Date and time for tasks instead of Date only.
+* add more features.
 
 --------------
 ## Live Demo
-[Check out the acual live website.](https://smartplanner.ayman.hackclub.app/)
+[Check out the live demo website.](https://smartplanner.ayman.hackclub.app/)
 
 --------------
 ## What I used AI for
-The majority of the project was full human creating, from searching the idea to applying it.  
-But AI Help was present in:
-- learn how to use flask, css, and javascript in the first website version building steps.
-- get help for resolving bugs.
-- analyse API outputs.  
+AI help used generally in analysing big API outputs tests and to host the website in Nest
 
 
 --------------
@@ -100,11 +103,11 @@ Statistics:
 ## What I learned During This Project
 During this project, I learned:
 
-- Flask routing.
-- HTML & CSS.
-- SQLAlchemy and SQLite.
-- User authentication.
-- Password hashing.
-- Responsive web design.
-- Git and GitHub workflow.
-- HTMX and background communication.
+- Flask routing
+- HTML & CSS
+- HTMX and background communication
+- SQLAlchemy and SQLite
+- User authentication
+- Password hashing
+- Responsive web design
+- Git and GitHub workflow
